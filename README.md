@@ -9,5 +9,5 @@
 
 3. 链接：明日更新。
 界面：
-https://github.com/jzlhll/AndroidCam2Demo/blob/master/Screenshots/a.png
-https://github.com/jzlhll/AndroidCam2Demo/blob/master/Screenshots/b.png
+![预览1](https://github.com/jzlhll/AndroidCam2Demo/blob/master/Screenshots/a.png)
+![预览2](https://github.com/jzlhll/AndroidCam2Demo/blob/master/Screenshots/b.png)
