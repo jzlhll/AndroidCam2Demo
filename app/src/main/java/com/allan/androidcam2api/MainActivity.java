@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
     private Runnable mTimeUpdateRunnable = new Runnable() {
         @Override
         public void run() {
-            mTimeView.setText("" + mTimeSec++);
+            mTimeView.setText("RecTime: " + mTimeSec++);
             mTimeView.postDelayed(mTimeUpdateRunnable, 1000);
         }
     };
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
                     MyCameraManager.me.get().takePicture(SD_PATH, "pic.png", new TakePhotoFunc() {
                         @Override
                         public void onPictureToken(String path) {
-                            MyToast.toastNew(getApplicationContext(), mView, "Get in Activity " + path);
+                            MyToast.toastNew(getApplicationContext(), mView, "Saved: " + path);
                         }
                     });
                 }
@@ -94,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
                                         mTimeView.setVisibility(View.GONE);
                                     }
                                 });
+                                MyToast.toastNew(getApplicationContext(), mView, "Saved: " + path);
                             }
                         });
                     } else {
