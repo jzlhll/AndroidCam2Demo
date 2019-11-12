@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,7 +10,7 @@
 
     <!-- 自行换TextureView， Size这里我是固定的。代码中要去做变化的。你看我故意搞的很畸形        -->
 
-    <com.allan.androidcam2api.view.CamTextureView
+    <com.allan.cam2api.cameraview.CamTextureView
         android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="512dp"
@@ -31,4 +31,4 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.86" />
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
