@@ -1,9 +1,6 @@
 package com.allan.androidcam2api;
 
-import android.Manifest;
-import android.graphics.Point;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -15,105 +12,48 @@ import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.allan.androidcam2api.base.RecordFunc;
-import com.allan.androidcam2api.base.TakePhotoFunc;
 import com.allan.androidcam2api.utils.AllPermission;
 import com.allan.androidcam2api.utils.CamLog;
 import com.allan.androidcam2api.utils.MyToast;
-import com.allan.androidcam2api.view.CamSurfaceView;
-import com.allan.androidcam2api.view.IViewDecorator;
 
-import java.io.File;
+public class MainActivity extends AppCompatActivity implements AllPermission.PermissionGrant, MyCameraManager.ModChange {
 
-public class MainActivity extends AppCompatActivity implements AllPermission.PermissionGrant, CamSurfaceView.MyCallback, MyCameraManager.ModChange {
-
-    private FloatingActionButton mTakePicFab, mRecordFab;
+    private FloatingActionButton mTabPictureBtn, mRecordBtn;
 
     private View mView;
+    MainActivityCameraViewPresent mCamViewPresent;
+    MainActivityRecordPresent mRecordPresent;
+
     private TextView mTimeView;
-    private int mTimeSec = 0;
-    private boolean mRecStarted = false;
-    private Runnable mTimeUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            mTimeView.setText("RecTime: " + mTimeSec++);
-            mTimeView.postDelayed(mTimeUpdateRunnable, 1000);
-        }
-    };
+    public TextView getTimeView() {
+        return mTimeView;
+    }
 
-    private IViewDecorator mViewDecorator;
+    public FloatingActionButton getRecordBtn() {
+        return mRecordBtn;
+    }
 
-    private static String SD_PATH = Environment.getExternalStorageDirectory().getPath();
     private OnClickListener mClickListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.fab_takepic: {
-                    CamLog.d("Sd path " + SD_PATH);
-                    MyCameraManager.me.get().takePicture(SD_PATH, "pic.png", new TakePhotoFunc() {
-                        @Override
-                        public void onPictureToken(String path) {
-                            MyToast.toastNew(getApplicationContext(), mView, "Saved: " + path);
-                        }
-                    });
+                case R.id.fab_takepicture_btn: {
+                    CamLog.d("click takePicture");
+                    mRecordPresent.clickOnTakePicture();
                 }
                 break;
-                case R.id.fab_rec: {
-                    if (!mRecStarted) {
-                        MyCameraManager.me.get().startRecord(SD_PATH + File.separator + "test.mp4", new RecordFunc() {
-                            @Override
-                            public void onRecordStart(boolean suc) {
-                                CamLog.d("onRecordStart suc " + suc);
-                                mRecStarted = true;
-                                mView.getHandler().post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mTimeView.getHandler().post(mTimeUpdateRunnable);
-                                        mTimeView.getHandler().post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                mRecordFab.setImageResource(R.drawable.take_rec);
-                                                mTimeView.setVisibility(View.VISIBLE);
-                                            }
-                                        });
-
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onRecordOver(String path) {
-                                mRecStarted = false;
-                                CamLog.d("onRecordOver " + path);
-                                mTimeView.getHandler().removeCallbacks(mTimeUpdateRunnable);
-                                mTimeView.getHandler().post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mTimeSec = 0;
-                                        mRecordFab.setImageResource(R.drawable.take_recing);
-                                        mTimeView.setVisibility(View.GONE);
-                                    }
-                                });
-                                MyToast.toastNew(getApplicationContext(), mView, "Saved: " + path);
-                            }
-                        });
-                    } else {
-                        MyCameraManager.me.get().stopRecord();
-                    }
+                case R.id.fab_record_btn: {
+                    CamLog.d("click record");
+                    mRecordPresent.clickOnRecord();
                     break;
                 }
             }
         }
-
     };
 
         @Override
         protected void onResume() {
             super.onResume();
-            String[] ss = new String[]{
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.CAPTURE_VIDEO_OUTPUT,
-            };
             AllPermission.requestMultiPermissions(this, this);
         }
 
@@ -122,22 +62,22 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
             super.onCreate(savedInstanceState);
             requestWindowFeature(Window.FEATURE_NO_TITLE);
             setContentView(R.layout.activity_main);
+            mCamViewPresent = new MainActivityCameraViewPresent(this);
+            mRecordPresent = new MainActivityRecordPresent(this);
 
             mView = findViewById(R.id.surfaceView);
+            mCamViewPresent.setCameraView(mView);
 
-            mViewDecorator = new IViewDecorator(mView);
-
-            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            Toolbar toolbar = findViewById(R.id.toolbar);
             setSupportActionBar(toolbar);
 
-            mTakePicFab = (FloatingActionButton) findViewById(R.id.fab_takepic);
-            mTakePicFab.setOnClickListener(mClickListener);
+            mTabPictureBtn = findViewById(R.id.fab_takepicture_btn);
+            mTabPictureBtn.setOnClickListener(mClickListener);
 
-            mRecordFab = (FloatingActionButton) findViewById(R.id.fab_rec);
-            mRecordFab.setOnClickListener(mClickListener);
+            mRecordBtn = findViewById(R.id.fab_record_btn);
+            mRecordBtn.setOnClickListener(mClickListener);
 
             mTimeView = findViewById(R.id.timeTv);
-            mViewDecorator.setCallback(this);
         }
 
         @Override
@@ -201,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
         }
 
         @Override
-        public void onChanged(final String newMod) { //监听了MyCamera的模式变化
+        public void onModChanged(final String newMod) { //监听了MyCamera的模式变化
             mView.post(new Runnable() {
                 @Override
                 public void run() {
@@ -209,23 +149,19 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
                     setTitle(newMod);
                     switch (newMod) {
                         case "Preview": {
-                            mRecordFab.setVisibility(View.GONE);
-                            mTakePicFab.setVisibility(View.GONE);
+                            mRecordBtn.setVisibility(View.GONE);
+                            mTabPictureBtn.setVisibility(View.GONE);
                         }
                         break;
                         case "Picture": {
-                            mRecordFab.setVisibility(View.GONE);
-                            mTakePicFab.setVisibility(View.VISIBLE);
+                            mRecordBtn.setVisibility(View.GONE);
+                            mTabPictureBtn.setVisibility(View.VISIBLE);
                         }
                         break;
+                        case "Picture&Preview&Video":
                         case "Picture&Preview": {
-                            mRecordFab.setVisibility(View.VISIBLE);
-                            mTakePicFab.setVisibility(View.VISIBLE);
-                        }
-                        break;
-                        case "Picture&Preview&Video": {
-                            mRecordFab.setVisibility(View.VISIBLE);
-                            mTakePicFab.setVisibility(View.VISIBLE);
+                            mRecordBtn.setVisibility(View.VISIBLE);
+                            mTabPictureBtn.setVisibility(View.VISIBLE);
                         }
                         break;
                     }
@@ -233,15 +169,4 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
             });
         }
 
-        @Override
-        public void pleaseStart() {
-            MyCameraManager.me.get().init(mView.getContext(), mView, mViewDecorator);
-            MyCameraManager.me.get().addModChanged(this);
-            MyCameraManager.me.get().openCamera();
-        }
-
-        @Override
-        public void pleaseStop() {
-            MyCameraManager.me.get().closeCamera();
-        }
     }

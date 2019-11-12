@@ -284,7 +284,6 @@ public class AllPermission {
         for (int i = 0; i < requestPermissions.length; i++) {
             String requestPermission = requestPermissions[i];
 
-
             //TODO checkSelfPermission
             int checkSelfPermission = -1;
             try {

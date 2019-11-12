@@ -11,9 +11,8 @@ import android.media.ImageReader;
 import android.support.annotation.NonNull;
 import android.util.Size;
 
-import com.allan.androidcam2api.base.TakePhotoFunc;
+import com.allan.androidcam2api.base.ITakePictureCallback;
 import com.allan.androidcam2api.MyCameraManager;
-import com.allan.androidcam2api.utils.CamLog;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,14 +20,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-public class StatePicAndPreview extends StatePreview implements ImageReader.OnImageAvailableListener{
-
-    public StatePicAndPreview(MyCameraManager cd) {
-        super(cd);
+public class StatePictureAndPreview extends StatePreview implements ImageReader.OnImageAvailableListener{
+    public interface IStateTakePictureCallback extends StatePreview.IStatePreviewCallback {
+        void onPictureToken(String path);
     }
 
-    public interface StateTakePicCb extends StatePreview.StatePreviewCB {
-        void onToken(String path);
+    public StatePictureAndPreview(MyCameraManager cd) {
+        super(cd);
     }
 
     @Override
@@ -69,7 +67,7 @@ public class StatePicAndPreview extends StatePreview implements ImageReader.OnIm
         MyCameraManager.me.get().getHandler().post(new ImageSaver(reader.acquireNextImage(), mFile));
     }
 
-    public boolean takePicture(String dir, String name, final TakePhotoFunc func) {
+    public boolean takePicture(String dir, String name, final ITakePictureCallback func) {
         mFile = new File(dir + File.separator + name);
         try {
             // This is the CaptureRequest.Builder that we use to take a picture.
@@ -95,8 +93,8 @@ public class StatePicAndPreview extends StatePreview implements ImageReader.OnIm
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session,
                                                @NonNull CaptureRequest request,
                                                @NonNull TotalCaptureResult result) {
-                    StateTakePicCb cb = (StateTakePicCb) mStateBaseCb;
-                    cb.onToken(mFile.getPath());
+                    IStateTakePictureCallback cb = (IStateTakePictureCallback) mStateBaseCb;
+                    cb.onPictureToken(mFile.getPath());
                     func.onPictureToken(mFile.getPath());
                 }
             };

@@ -15,18 +15,21 @@ import android.view.Surface;
 import android.view.View;
 
 import com.allan.androidcam2api.State.StateDied;
-import com.allan.androidcam2api.State.StatePicAndPreview;
-import com.allan.androidcam2api.State.StatePicAndRecAndPreview;
+import com.allan.androidcam2api.State.StatePictureAndPreview;
+import com.allan.androidcam2api.State.StatePictureAndRecordAndPreview;
 import com.allan.androidcam2api.State.StatePreview;
+import com.allan.androidcam2api.State.FeatureUtil;
+import com.allan.androidcam2api.base.FunctionRecord;
+import com.allan.androidcam2api.base.FunctionTakePicture;
 import com.allan.androidcam2api.base.ICameraAction;
-import com.allan.androidcam2api.base.RecordFunc;
-import com.allan.androidcam2api.base.StateBase;
-import com.allan.androidcam2api.base.TakePhotoFunc;
+import com.allan.androidcam2api.base.IRecordCallback;
+import com.allan.androidcam2api.State.AbstractStateBase;
+import com.allan.androidcam2api.base.ITakePictureCallback;
 import com.allan.androidcam2api.utils.CamLog;
 import com.allan.androidcam2api.utils.MyToast;
 import com.allan.androidcam2api.utils.Singleton;
 import com.allan.androidcam2api.utils.WeakHandler;
-import com.allan.androidcam2api.view.IViewDecorator;
+import com.allan.androidcam2api.view.CameraViewDelegate;
 
 import java.util.ArrayList;
 
@@ -44,6 +47,10 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
         }
     };
 
+    public static MyCameraManager get() {
+        return me.get();
+    }
+
     private MyCameraManager() {
     }
 
@@ -51,10 +58,9 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
     private WeakHandler mCamHandler = null; //camera线程的handler
     private HandlerThread mSubThread = null; //camera线程
     private Context mContext;
-    private View mCamView;
-    private IViewDecorator mViewDecorator;
+    private CameraViewDelegate mCameraView;
     /////camera信息////
-    private StateBase mCurrentSt; //当前preview的状态
+    private AbstractStateBase mCurrentSt; //当前preview的状态
     private CameraCharacteristics mCamChars; //特性
     private CameraDevice mCameraDevice; //camera device
     private int mCameraId;
@@ -94,7 +100,7 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
     }
 
     public void setPreviewSize(int width, int height) {
-        mViewDecorator.setPreviewSize(width, height);
+        mCameraView.setPreviewSize(width, height);
     }
 
     public String getRecordPath() {
@@ -105,7 +111,7 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
      * 拿到当前View的Surface
      */
     public Surface getSurface() {
-        return mViewDecorator.getSurface();
+        return mCameraView.getSurface();
     }
 
     public void setCameraDevice(CameraDevice cameraDevice) {
@@ -144,9 +150,8 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
     private static final int TAKE_PIC = 110;
     //endregion
 
-    public void init(Context context, View v, IViewDecorator vd) {
-        mCamView = v;
-        mViewDecorator = vd;
+    public void init(Context context, CameraViewDelegate vd) {
+        mCameraView = vd;
         mContext = context;
         mSubThread = new HandlerThread("Camera-thread");
         mSubThread.start();
@@ -168,6 +173,7 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
 
     @Override
     public void onHandler(Message msg) {
+        View toastParentView = mCameraView.getView();
         switch (msg.what) {
             case OPEN: {
                 if (mCurrentSt != null) {
@@ -215,18 +221,18 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
             }
             break;
             case TAKE_PIC: {
-                if ((mCurrentSt.getId() & StateBase.PIC) == StateBase.PIC) {
-                    if (mCurrentSt instanceof StatePicAndPreview) {
-                        StatePicAndPreview spp = (StatePicAndPreview) mCurrentSt;
-                        TakePhotoFunc.ObjStruct objStruct = (TakePhotoFunc.ObjStruct) msg.obj;
+                if ((mCurrentSt.getId() & FeatureUtil.FEATURE_PICTURE) == FeatureUtil.FEATURE_PICTURE) {
+                    if (mCurrentSt instanceof StatePictureAndPreview) {
+                        StatePictureAndPreview spp = (StatePictureAndPreview) mCurrentSt;
+                        FunctionTakePicture objStruct = (FunctionTakePicture) msg.obj;
                         spp.takePicture(objStruct.dir, objStruct.name, objStruct.func);
-                    } else if (mCurrentSt instanceof StatePicAndRecAndPreview) { //TODO record pciture preview
-                        StatePicAndRecAndPreview sppr = (StatePicAndRecAndPreview) mCurrentSt;
-                        TakePhotoFunc.ObjStruct objStruct = (TakePhotoFunc.ObjStruct) msg.obj;
+                    } else if (mCurrentSt instanceof StatePictureAndRecordAndPreview) { //TODO record pciture preview
+                        StatePictureAndRecordAndPreview sppr = (StatePictureAndRecordAndPreview) mCurrentSt;
+                        FunctionTakePicture objStruct = (FunctionTakePicture) msg.obj;
                         sppr.takePicture(objStruct.dir, objStruct.name, objStruct.func);
                     }
                 } else { //如果没有Picture属性则报错
-                    MyToast.toastNew(getContext(), mCamView, "No Picture Mod");
+                    MyToast.toastNew(getContext(), toastParentView, "No Picture Mod");
                     return;
                 }
             }
@@ -238,29 +244,29 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
                 }
 
                 if (mCurrentSt.getId() == 0x011) {
-                    MyToast.toastNew(getContext(), mCamView, "Already in this mod");
+                    MyToast.toastNew(getContext(), toastParentView, "Already in this mod");
                     return;
                 }
                 notifyModChange("Picture&Preview");
                 mCurrentSt.closeSession(); //关闭session
 
-                mCurrentSt = new StatePicAndPreview(MyCameraManager.this);
+                mCurrentSt = new StatePictureAndPreview(MyCameraManager.this);
 
                 try {
-                    mCurrentSt.createSession(new StatePicAndPreview.StateTakePicCb() {
+                    mCurrentSt.createSession(new StatePictureAndPreview.IStateTakePictureCallback() {
                         @Override
-                        public void onToken(String path) {
+                        public void onPictureToken(String path) {
                             CamLog.d("onToken in path" + path);
                         }
 
                         @Override
-                        public void onPreviewSuc() {
-                            CamLog.d("onPreviewSuc in myacmera");
+                        public void onPreviewSucceeded() {
+                            CamLog.d("onPreviewSucceeded in myacmera");
                         }
 
                         @Override
-                        public void onPreviewErr() {
-                            CamLog.d("onPreviewErr in myacmera");
+                        public void onPreviewFailed() {
+                            CamLog.d("onPreviewFailed in myacmera");
                         }
                     });
                 } catch (Exception e) {
@@ -275,7 +281,7 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
                     return;
                 }
                 if (mCurrentSt.getId() == 0x001) {
-                    MyToast.toastNew(getContext(), mCamView, "Already in this mod");
+                    MyToast.toastNew(getContext(), toastParentView, "Already in this mod");
                     return;
                 }
                 notifyModChange("Preview");
@@ -284,15 +290,15 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
                 mCurrentSt = new StatePreview(MyCameraManager.this);
 
                 try {
-                    mCurrentSt.createSession(new StatePreview.StatePreviewCB() {
+                    mCurrentSt.createSession(new StatePreview.IStatePreviewCallback() {
                         @Override
-                        public void onPreviewSuc() {
-                            CamLog.d("onPreviewSuc in myacmera");
+                        public void onPreviewSucceeded() {
+                            CamLog.d("onPreviewSucceeded in myacmera");
                         }
 
                         @Override
-                        public void onPreviewErr() {
-                            CamLog.d("onPreviewErr in myacmera");
+                        public void onPreviewFailed() {
+                            CamLog.d("onPreviewFailed in myacmera");
                         }
                     });
                 } catch (Exception e) {
@@ -314,17 +320,17 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
                     return;
                 }
                 if (mCurrentSt.getId() == 0x111) {
-                    MyToast.toastNew(getContext(), mCamView, "Already in this mod");
+                    MyToast.toastNew(getContext(), toastParentView, "Already in this mod");
                     return;
                 }
                 mCurrentSt.closeSession(); //关闭session
-                RecordFunc.ObjStruct objStruct = (RecordFunc.ObjStruct) msg.obj;
-                final RecordFunc func = objStruct.func;
+                FunctionRecord objStruct = (FunctionRecord) msg.obj;
+                final IRecordCallback func = objStruct.func;
                 mRecordPath = objStruct.path;
-                StatePicAndRecAndPreview sprp = new StatePicAndRecAndPreview(MyCameraManager.this);
+                StatePictureAndRecordAndPreview sprp = new StatePictureAndRecordAndPreview(MyCameraManager.this);
                 mCurrentSt = sprp;
                 try {
-                    mCurrentSt.createSession(new StatePicAndRecAndPreview.StatePPRCB() {
+                    mCurrentSt.createSession(new StatePictureAndRecordAndPreview.StatePPRCB() {
                         @Override
                         public void onRecordStart(boolean suc) {
                             transmitModVideoPicturePreview();
@@ -332,32 +338,32 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
                         }
 
                         @Override
-                        public void onError(int err) {
+                        public void onRecordError(int err) {
                             //TODO
                             //完成后，退回之前的state，这里直接回到PreviewAndPicture
                             transmitModPicturePreview();
                         }
 
                         @Override
-                        public void onRecordOver(String path) {
+                        public void onRecordEnd(String path) {
                             //完成后，退回之前的state，这里直接回到PreviewAndPicture
                             transmitModPicturePreview();
-                            func.onRecordOver(path);
+                            func.onRecordEnd(path);
                         }
 
                         @Override
-                        public void onToken(String path) {
+                        public void onPictureToken(String path) {
                             CamLog.d("rec:onToken in path" + path);
                         }
 
                         @Override
-                        public void onPreviewSuc() {
-                            CamLog.d("rec:onPreviewSuc in myacmera");
+                        public void onPreviewSucceeded() {
+                            CamLog.d("rec:onPreviewSucceeded in myacmera");
                         }
 
                         @Override
-                        public void onPreviewErr() {
-                            CamLog.d("rec:onPreviewErr in myacmera");
+                        public void onPreviewFailed() {
+                            CamLog.d("rec:onPreviewFailed in myacmera");
                         }
                     });
                 } catch (Exception e) {
@@ -368,14 +374,14 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
             break;
             case STOP_REC: {
                 if (mCurrentSt == null) {
-                    MyToast.toastNew(getContext(), mCamView, "No mod");
+                    MyToast.toastNew(getContext(), toastParentView, "No mod");
                     return;
                 }
                 if (mCurrentSt.getId() != 0x111) {
-                    MyToast.toastNew(getContext(), mCamView, "Not in recordMod");
+                    MyToast.toastNew(getContext(), toastParentView, "Not in recordMod");
                     return;
                 }
-                StatePicAndRecAndPreview sppr = (StatePicAndRecAndPreview) mCurrentSt;
+                StatePictureAndRecordAndPreview sppr = (StatePictureAndRecordAndPreview) mCurrentSt;
                 sppr.stopRecord();
             }
             break;
@@ -403,11 +409,6 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
     }
 
     @Override
-    public boolean transmitModPicture() {
-        return true;
-    }
-
-    @Override
     public boolean transmitModPicturePreview() {
         mCamHandler.sendEmptyMessage(MOD_PREVIEW_PIC);
         return false;
@@ -427,16 +428,16 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
     /**
      * 在含有picture模式下才能去takePicture
      */
-    public void takePicture(String dir, String name, TakePhotoFunc func) {
-        TakePhotoFunc.ObjStruct objStruct = new TakePhotoFunc.ObjStruct(dir, name, func);
+    public void takePicture(String dir, String name, ITakePictureCallback func) {
+        FunctionTakePicture objStruct = new FunctionTakePicture(dir, name, func);
         mCamHandler.sendMessage(mCamHandler.obtainMessage(TAKE_PIC, objStruct));
     }
 
     /**
      * 不同于拍照，开始录制，是必须切换模式的。因此相当于transmitMod createSession并传递了record
      */
-    public void startRecord(String path, RecordFunc func) {
-        RecordFunc.ObjStruct objStruct = new RecordFunc.ObjStruct(path, func);
+    public void startRecord(String path, IRecordCallback func) {
+        FunctionRecord objStruct = new FunctionRecord(path, func);
         mCamHandler.sendMessage(mCamHandler.obtainMessage(START_REC, objStruct));
     }
 
@@ -452,12 +453,12 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
     private void notifyModChange(String s) {
         if (mModChanges == null) return;
         for (ModChange c : mModChanges) {
-            c.onChanged(s);
+            c.onModChanged(s);
         }
     }
 
     public interface ModChange {
-        void onChanged(String newMod);
+        void onModChanged(String newMod);
     }
 
     public synchronized void addModChanged(ModChange change) {

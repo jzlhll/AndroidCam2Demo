@@ -23,7 +23,7 @@
     <include layout="@layout/content_main" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_takepic"
+        android:id="@+id/fab_takepicture_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|start"
@@ -31,7 +31,7 @@
         android:layout_margin="@dimen/fab_margin"
         app:srcCompat="@drawable/take_photo" />
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_rec"
+        android:id="@+id/fab_record_btn"
         android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

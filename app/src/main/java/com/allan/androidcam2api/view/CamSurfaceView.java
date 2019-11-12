@@ -8,15 +8,9 @@ import android.view.SurfaceView;
 import com.allan.androidcam2api.utils.CamLog;
 
 public class CamSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
-    public interface MyCallback {
-        void pleaseStart();
+    private IViewStatusChangeCallback mCallback;
 
-        void pleaseStop();
-    }
-
-    private MyCallback mCallback;
-
-    public void setCallback(MyCallback mCallback) {
+    public void setCallback(IViewStatusChangeCallback mCallback) {
         this.mCallback = mCallback;
     }
 

@@ -6,15 +6,13 @@ package com.allan.androidcam2api.base;
  * @code MyCamera
  */
 public interface ICameraAction {
-    public boolean openCamera();
+   boolean openCamera();
 
-    public void closeCamera();
+   void closeCamera();
 
-    public boolean transmitModPreview();
+   boolean transmitModPreview();
 
-    public boolean transmitModPicture();
-
-    public boolean transmitModPicturePreview();
+   boolean transmitModPicturePreview();
 
     //public boolean transmitModVideoPicturePreview();
 }

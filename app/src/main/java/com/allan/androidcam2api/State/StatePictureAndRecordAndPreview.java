@@ -13,14 +13,20 @@ import android.support.annotation.NonNull;
 import android.util.Size;
 
 import com.allan.androidcam2api.MyCameraManager;
-import com.allan.androidcam2api.base.StateBase;
 import com.allan.androidcam2api.utils.CamLog;
 
-public class StatePicAndRecAndPreview extends StatePicAndPreview implements MediaRecorder.OnErrorListener, MediaRecorder.OnInfoListener {
+public class StatePictureAndRecordAndPreview extends StatePictureAndPreview implements MediaRecorder.OnErrorListener, MediaRecorder.OnInfoListener {
+    public interface StatePPRCB extends StatePictureAndPreview.IStateTakePictureCallback {
+        void onRecordStart(boolean suc);
+
+        void onRecordError(int err);
+
+        void onRecordEnd(String path);
+    }
 
     private MediaRecorder mMediaRecorder;
 
-    public StatePicAndRecAndPreview(MyCameraManager cd) {
+    public StatePictureAndRecordAndPreview(MyCameraManager cd) {
         super(cd);
     }
 
@@ -33,13 +39,6 @@ public class StatePicAndRecAndPreview extends StatePicAndPreview implements Medi
         return mMediaRecorder;
     }
 
-    public interface StatePPRCB extends StatePicAndPreview.StateTakePicCb {
-        void onRecordStart(boolean suc);
-
-        void onError(int err);
-
-        void onRecordOver(String path);
-    }
 
     @Override
     protected void addTarget() {
@@ -81,7 +80,7 @@ public class StatePicAndRecAndPreview extends StatePicAndPreview implements Medi
     }
 
     @Override
-    public boolean createSession(StateBaseCb cb) {
+    public boolean createSession(IStateBaseCallback cb) {
         return super.createSession(cb);
     }
 
@@ -93,7 +92,7 @@ public class StatePicAndRecAndPreview extends StatePicAndPreview implements Medi
         mMediaRecorder.release();
         mMediaRecorder = null;
         StatePPRCB statePPRCB = (StatePPRCB) mStateBaseCb;
-        statePPRCB.onRecordOver(camera.getRecordPath());
+        statePPRCB.onRecordEnd(camera.getRecordPath());
     }
 
     @Override
@@ -169,7 +168,7 @@ public class StatePicAndRecAndPreview extends StatePicAndPreview implements Medi
     @Override
     public void onError(MediaRecorder mediaRecorder, int i, int i1) {
         StatePPRCB statePPRCB = (StatePPRCB) mStateBaseCb;
-        statePPRCB.onError(i);
+        statePPRCB.onRecordError(i);
     }
 
     @Override

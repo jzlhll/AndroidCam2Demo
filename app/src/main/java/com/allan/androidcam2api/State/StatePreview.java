@@ -9,18 +9,16 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Size;
 import android.view.Surface;
 
-import com.allan.androidcam2api.base.StateBase;
 import com.allan.androidcam2api.MyCameraManager;
 import com.allan.androidcam2api.utils.CamLog;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class StatePreview extends StateBase {
-
-    public interface StatePreviewCB extends StateBaseCb{
-        void onPreviewSuc();
-        void onPreviewErr();
+public class StatePreview extends AbstractStateBase {
+    public interface IStatePreviewCallback extends IStateBaseCallback{
+        void onPreviewSucceeded();
+        void onPreviewFailed();
     }
 
     public StatePreview(MyCameraManager cd) {
@@ -98,8 +96,8 @@ public class StatePreview extends StateBase {
                     e.printStackTrace();
                 }
                 if (mStateBaseCb != null) {
-                    StatePreviewCB cb = (StatePreviewCB) mStateBaseCb;
-                    cb.onPreviewSuc();
+                    IStatePreviewCallback cb = (IStatePreviewCallback) mStateBaseCb;
+                    cb.onPreviewSucceeded();
                 }
             }
 
@@ -107,8 +105,8 @@ public class StatePreview extends StateBase {
             public void onConfigureFailed(CameraCaptureSession session) {
                 CamLog.e("Error Configure Preview!");
                 if (mStateBaseCb != null) {
-                    StatePreviewCB cb = (StatePreviewCB) mStateBaseCb;
-                    cb.onPreviewErr();
+                    IStatePreviewCallback cb = (IStatePreviewCallback) mStateBaseCb;
+                    cb.onPreviewFailed();
                 }
             }
         };

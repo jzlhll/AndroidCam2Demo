@@ -1,4 +1,4 @@
-package com.allan.androidcam2api.base;
+package com.allan.androidcam2api.State;
 
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
@@ -13,41 +13,27 @@ import java.util.List;
  * 抽象类，用于描述，不同的camera session状态
  * 这个类的子类都将是处于camera open之后的状态（StateDied除外）
  */
-public abstract class StateBase {
+public abstract class AbstractStateBase {
     /**
      * 监听创建session的状态变化
      */
-    public interface StateBaseCb {
-
+    public interface IStateBaseCallback {
     }
-
-    /**
-     * 表示拍照的能力
-     */
-    public static final int PIC = 0x010;
-    /**
-     * 表示预览的能力
-     */
-    public static final int PREVIEW = 0x001;
-    /**
-     * 表示录制的能力
-     */
-    public static final int VIDEO = 0x100;
 
     /**
      * 当前类支持的能力组合
      */
     public int getId() {
-        return 0;
+        return FeatureUtil.FEATURE_NONE;
     }
 
     protected MyCameraManager camera;
 
-    protected StateBaseCb mStateBaseCb;
+    protected IStateBaseCallback mStateBaseCb;
 
     protected List<Surface> camSurfaces;
 
-    public StateBase(MyCameraManager mc) {
+    public AbstractStateBase(MyCameraManager mc) {
         camera = mc;
         createSurfaces();
     }
@@ -100,7 +86,7 @@ public abstract class StateBase {
      * 该方法用于camera opened以后，创建preview、picture和record等的会话
      * 且session只有一个
      */
-    public boolean createSession(StateBaseCb cb) {
+    public boolean createSession(IStateBaseCallback cb) {
         mStateBaseCb = cb;
         try {
             camera.previewBuilder = camera.getCameraDevice().createCaptureRequest(getTemplateType());
