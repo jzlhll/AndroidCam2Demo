@@ -9,7 +9,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Size;
 import android.view.Surface;
 
-import com.allan.androidcam2api.MyCameraManager;
+import com.allan.androidcam2api.manager.MyCameraManager;
 import com.allan.androidcam2api.utils.CamLog;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class StatePreview extends AbstractStateBase {
         camSurfaces = new ArrayList<>();
         setSize(1920, 1080); //这里故意设置一些不同的分辨率,让不同的模式下有不同
         //其实我们可能希望拍照和预览和录像都保持preview size的不变。则这里设置好即可。
-        camSurfaces.add(MyCameraManager.me.get().getSurface());
+        camSurfaces.add(cameraManager.getSurface());
     }
 
     static class CompareSizesByArea implements Comparator<Size> {
@@ -49,7 +49,7 @@ public class StatePreview extends AbstractStateBase {
     }
 
     protected final Size setSize(int wishWidth, int wishHeight) {
-        StreamConfigurationMap map = MyCameraManager.me.get().getCameraCharacteristics().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        StreamConfigurationMap map = cameraManager.getCameraCharacteristics().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = map.getOutputSizes(ImageFormat.JPEG);
         Size needSize = null;
 
@@ -70,14 +70,14 @@ public class StatePreview extends AbstractStateBase {
             throw new RuntimeException("No need Camera Size!");
         }
 
-        MyCameraManager.me.get().setPreviewSize(needSize.getWidth(), needSize.getHeight());
+        cameraManager.setPreviewSize(needSize.getWidth(), needSize.getHeight());
         return needSize;
     }
 
     @Override
     protected void addTarget() {
         for (Surface su : camSurfaces) {
-            camera.previewBuilder.addTarget(su);
+            cameraManager.getPreviewBuilder().addTarget(su);
         }
     }
 
@@ -86,12 +86,13 @@ public class StatePreview extends AbstractStateBase {
         return new CameraCaptureSession.StateCallback() {
             @Override
             public void onConfigured(CameraCaptureSession session) {
-                camera.camSession = session;
-                camera.previewBuilder.set(CaptureRequest.CONTROL_AF_MODE,
+                cameraManager.setCamSession(session);
+                cameraManager.getPreviewBuilder().set(CaptureRequest.CONTROL_AF_MODE,
                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                 //camera.previewBuilder.set(CaptureRequest.JPEG_THUMBNAIL_SIZE, new Size(1080, 1920));
                 try {
-                    camera.camSession.setRepeatingRequest(camera.previewBuilder.build(), null, MyCameraManager.me.get().getHandler());
+                    cameraManager.getCamSession().setRepeatingRequest(cameraManager.getPreviewBuilder().build(),
+                            null, cameraManager.getHandler());
                 } catch (CameraAccessException e) {
                     e.printStackTrace();
                 }

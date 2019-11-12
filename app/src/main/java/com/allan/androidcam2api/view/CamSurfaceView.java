@@ -36,7 +36,7 @@ public class CamSurfaceView extends SurfaceView implements SurfaceHolder.Callbac
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         CamLog.d("SurfaceCreated");
-        if (mCallback != null) mCallback.pleaseStart();
+        if (mCallback != null) mCallback.onSurfaceCreated();
     }
 
     @Override
@@ -47,7 +47,7 @@ public class CamSurfaceView extends SurfaceView implements SurfaceHolder.Callbac
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         CamLog.d("surfaceDestroyed");
-        if (mCallback != null) mCallback.pleaseStop();
+        if (mCallback != null) mCallback.onSurfaceDestroyed();
     }
 
 }

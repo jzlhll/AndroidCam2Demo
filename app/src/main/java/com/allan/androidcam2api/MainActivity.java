@@ -12,6 +12,7 @@ import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.allan.androidcam2api.manager.MyCameraManager;
 import com.allan.androidcam2api.utils.AllPermission;
 import com.allan.androidcam2api.utils.CamLog;
 import com.allan.androidcam2api.utils.MyToast;
@@ -95,10 +96,10 @@ public class MainActivity extends AppCompatActivity implements AllPermission.Per
             int id = item.getItemId();
             //noinspection SimplifiableIfStatement
             if (id == R.id.action_preview) {
-                MyCameraManager.me.get().transmitModPreview();
+                MyCameraManager.instance().transmitModPreview();
                 return true;
             } else if (id == R.id.action_preview_pic) {
-                MyCameraManager.me.get().transmitModPicturePreview();
+                MyCameraManager.instance().transmitModPicturePreview();
                 return true;
             }
 

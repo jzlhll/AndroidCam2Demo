@@ -1,4 +1,4 @@
-package com.allan.androidcam2api;
+package com.allan.androidcam2api.manager;
 
 import android.content.Context;
 import android.hardware.camera2.CameraAccessException;
@@ -19,8 +19,8 @@ import com.allan.androidcam2api.State.StatePictureAndPreview;
 import com.allan.androidcam2api.State.StatePictureAndRecordAndPreview;
 import com.allan.androidcam2api.State.StatePreview;
 import com.allan.androidcam2api.State.FeatureUtil;
-import com.allan.androidcam2api.base.FunctionRecord;
-import com.allan.androidcam2api.base.FunctionTakePicture;
+import com.allan.androidcam2api.function.FunctionRecord;
+import com.allan.androidcam2api.function.FunctionTakePicture;
 import com.allan.androidcam2api.base.ICameraAction;
 import com.allan.androidcam2api.base.IRecordCallback;
 import com.allan.androidcam2api.State.AbstractStateBase;
@@ -40,14 +40,14 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
      * 这里将MyCamera作为单例公开
      * 采用了camera framework的类似方法创建单例模式
      */
-    public static final Singleton<MyCameraManager> me = new Singleton<MyCameraManager>() {
+    private static final Singleton<MyCameraManager> me = new Singleton<MyCameraManager>() {
         @Override
         public MyCameraManager create() {
             return new MyCameraManager();
         }
     };
 
-    public static MyCameraManager get() {
+    public static MyCameraManager instance() {
         return me.get();
     }
 
@@ -67,8 +67,24 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
 
     private String mRecordPath = null;
 
-    public CaptureRequest.Builder previewBuilder = null;
-    public CameraCaptureSession camSession = null;
+    public CaptureRequest.Builder getPreviewBuilder() {
+        return previewBuilder;
+    }
+
+    public void setPreviewBuilder(CaptureRequest.Builder previewBuilder) {
+        this.previewBuilder = previewBuilder;
+    }
+
+    public CameraCaptureSession getCamSession() {
+        return camSession;
+    }
+
+    public void setCamSession(CameraCaptureSession camSession) {
+        this.camSession = camSession;
+    }
+
+    private CaptureRequest.Builder previewBuilder = null;
+    private CameraCaptureSession camSession = null;
 
     //Camera打开回调
     private CameraDevice.StateCallback mCameraStateCallback = new CameraDevice.StateCallback() {
@@ -330,7 +346,7 @@ public class MyCameraManager implements WeakHandler.WeakCallback, ICameraAction 
                 StatePictureAndRecordAndPreview sprp = new StatePictureAndRecordAndPreview(MyCameraManager.this);
                 mCurrentSt = sprp;
                 try {
-                    mCurrentSt.createSession(new StatePictureAndRecordAndPreview.StatePPRCB() {
+                    mCurrentSt.createSession(new StatePictureAndRecordAndPreview.IStateTakePictureRecordCallback() {
                         @Override
                         public void onRecordStart(boolean suc) {
                             transmitModVideoPicturePreview();

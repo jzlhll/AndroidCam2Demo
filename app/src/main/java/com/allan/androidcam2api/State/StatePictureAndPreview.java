@@ -12,7 +12,7 @@ import android.support.annotation.NonNull;
 import android.util.Size;
 
 import com.allan.androidcam2api.base.ITakePictureCallback;
-import com.allan.androidcam2api.MyCameraManager;
+import com.allan.androidcam2api.manager.MyCameraManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,21 +31,21 @@ public class StatePictureAndPreview extends StatePreview implements ImageReader.
 
     @Override
     protected void addTarget() {
-        camera.previewBuilder.addTarget(camSurfaces.get(0));
+        cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(0));
     }
 
     @Override
     protected void createSurfaces() {
-        if (MyCameraManager.me.get().getCameraCharacteristics() == null) {
+        if (cameraManager.getCameraCharacteristics() == null) {
             throw new RuntimeException("No Camera Charact!");
         }
         camSurfaces = new ArrayList<>();
         Size needSize = setSize(1920, 1080);
-        camSurfaces.add(MyCameraManager.me.get().getSurface());
+        camSurfaces.add(cameraManager.getSurface());
         if (mImageReader == null) {
             //**** width和height要传入正确，否则，preview就变大小
             mImageReader = ImageReader.newInstance(needSize.getWidth(), needSize.getHeight(), ImageFormat.JPEG, 1); //最大的图片的个数
-            mImageReader.setOnImageAvailableListener(this, MyCameraManager.me.get().getHandler());
+            mImageReader.setOnImageAvailableListener(this, cameraManager.getHandler());
         }
         camSurfaces.add(mImageReader.getSurface()); //创建并添加拍照surface
     }
@@ -64,7 +64,7 @@ public class StatePictureAndPreview extends StatePreview implements ImageReader.
 
     @Override
     public void onImageAvailable(ImageReader reader) {
-        MyCameraManager.me.get().getHandler().post(new ImageSaver(reader.acquireNextImage(), mFile));
+        cameraManager.getHandler().post(new ImageSaver(reader.acquireNextImage(), mFile));
     }
 
     public boolean takePicture(String dir, String name, final ITakePictureCallback func) {
@@ -72,7 +72,7 @@ public class StatePictureAndPreview extends StatePreview implements ImageReader.
         try {
             // This is the CaptureRequest.Builder that we use to take a picture.
             final CaptureRequest.Builder captureBuilder =
-                    camera.getCameraDevice().createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                    cameraManager.getCameraDevice().createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(mImageReader.getSurface());
 
             // Use the same AE and AF modes as the preview.
@@ -101,7 +101,7 @@ public class StatePictureAndPreview extends StatePreview implements ImageReader.
 
             //camera.camSession.stopRepeating();
             //camera.camSession.abortCaptures();
-            camera.camSession.capture(captureBuilder.build(), CaptureCallback, null);
+            cameraManager.getCamSession().capture(captureBuilder.build(), CaptureCallback, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
             return false;

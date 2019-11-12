@@ -2,6 +2,7 @@ package com.allan.androidcam2api;
 
 import android.view.View;
 
+import com.allan.androidcam2api.manager.MyCameraManager;
 import com.allan.androidcam2api.view.CameraViewDelegate;
 import com.allan.androidcam2api.view.IViewStatusChangeCallback;
 
@@ -21,17 +22,17 @@ public class MainActivityCameraViewPresent implements IViewStatusChangeCallback{
     }
 
     @Override
-    public void pleaseStart() {
+    public void onSurfaceCreated() {
         if (mActivity.get() != null) {
             MainActivity mainActivity = mActivity.get();
-            MyCameraManager.me.get().init(mainActivity, mCameraView);
-            MyCameraManager.me.get().addModChanged(mainActivity);
-            MyCameraManager.me.get().openCamera();
+            MyCameraManager.instance().init(mainActivity, mCameraView);
+            MyCameraManager.instance().addModChanged(mainActivity);
+            MyCameraManager.instance().openCamera();
         }
     }
 
     @Override
-    public void pleaseStop() {
-        MyCameraManager.me.get().closeCamera();
+    public void onSurfaceDestroyed() {
+        MyCameraManager.instance().closeCamera();
     }
 }

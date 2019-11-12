@@ -12,11 +12,11 @@ import android.media.MediaRecorder;
 import android.support.annotation.NonNull;
 import android.util.Size;
 
-import com.allan.androidcam2api.MyCameraManager;
+import com.allan.androidcam2api.manager.MyCameraManager;
 import com.allan.androidcam2api.utils.CamLog;
 
 public class StatePictureAndRecordAndPreview extends StatePictureAndPreview implements MediaRecorder.OnErrorListener, MediaRecorder.OnInfoListener {
-    public interface StatePPRCB extends StatePictureAndPreview.IStateTakePictureCallback {
+    public interface IStateTakePictureRecordCallback extends StatePictureAndPreview.IStateTakePictureCallback {
         void onRecordStart(boolean suc);
 
         void onRecordError(int err);
@@ -42,8 +42,8 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
 
     @Override
     protected void addTarget() {
-        camera.previewBuilder.addTarget(camSurfaces.get(0)); //将preview和record的surface传入
-        camera.previewBuilder.addTarget(camSurfaces.get(2));
+        cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(0)); //将preview和record的surface传入
+        cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(2));
     }
 
     @Override
@@ -51,16 +51,17 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
         return new CameraCaptureSession.StateCallback() {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                camera.camSession = cameraCaptureSession;
-                camera.previewBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                cameraManager.setCamSession(cameraCaptureSession);
+                cameraManager.getPreviewBuilder().set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
                 try {
-                    camera.camSession.setRepeatingRequest(camera.previewBuilder.build(), null, camera.getHandler());
+                    cameraManager.getCamSession().setRepeatingRequest( cameraManager.getPreviewBuilder().build(),
+                            null, cameraManager.getHandler());
                     if (mMediaRecorder != null) {
                         mMediaRecorder.start();
                     } else {
                         CamLog.e("error!!!! mediaRecord is null");
                     }
-                    StatePPRCB statePPRCB = (StatePPRCB) mStateBaseCb;
+                    IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
                     statePPRCB.onRecordStart(true);
                 } catch (CameraAccessException e) {
                 }
@@ -68,7 +69,7 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
 
             @Override
             public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                StatePPRCB statePPRCB = (StatePPRCB) mStateBaseCb;
+                IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
                 statePPRCB.onRecordStart(false);
             }
         };
@@ -91,8 +92,8 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
         mMediaRecorder.stop();
         mMediaRecorder.release();
         mMediaRecorder = null;
-        StatePPRCB statePPRCB = (StatePPRCB) mStateBaseCb;
-        statePPRCB.onRecordEnd(camera.getRecordPath());
+        IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
+        statePPRCB.onRecordEnd(cameraManager.getRecordPath());
     }
 
     @Override
@@ -108,7 +109,7 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
             }
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            StreamConfigurationMap map = camera.getCameraCharacteristics().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            StreamConfigurationMap map = cameraManager.getCameraCharacteristics().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             Size[] sizes = map.getOutputSizes(MediaRecorder.class);
 
             Size needSize = null;
@@ -118,11 +119,11 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
                     needSize = si;
                 }
 
-                if (camera.getCameraId() == CameraCharacteristics.LENS_FACING_FRONT
+                if (cameraManager.getCameraId() == CameraCharacteristics.LENS_FACING_FRONT
                         && (si.getHeight() == 1080 || si.getHeight() == 1920)) {
                     needSize = si;
                     break;
-                } else if (camera.getCameraId() == CameraCharacteristics.LENS_FACING_BACK
+                } else if (cameraManager.getCameraId() == CameraCharacteristics.LENS_FACING_BACK
                         && (si.getHeight() == 720 || si.getHeight() == 1280)) {
                     needSize = si;
                     break;
@@ -131,8 +132,8 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
 
             mMediaRecorder.setVideoSize(needSize.getWidth(), needSize.getHeight());
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-            CamcorderProfile camPro = CamcorderProfile.get(camera.getCameraId(),
-                    camera.getCameraId() == CameraCharacteristics.LENS_FACING_FRONT ?
+            CamcorderProfile camPro = CamcorderProfile.get(cameraManager.getCameraId(),
+                    cameraManager.getCameraId() == CameraCharacteristics.LENS_FACING_FRONT ?
                             CamcorderProfile.QUALITY_1080P : CamcorderProfile.QUALITY_720P);
             if (true) {
                 mMediaRecorder.setAudioEncoder(camPro.audioCodec);
@@ -146,7 +147,7 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
             CamLog.d("Video frame " + camPro.videoFrameRate + " bitRate " + camPro.videoBitRate / 2);
             // mMediaRecorder.setMaxDuration(video.duration);
             // mMediaRecorder.setMaxDuration(30000/*video.duration*/);
-            mMediaRecorder.setOutputFile(camera.getRecordPath());
+            mMediaRecorder.setOutputFile(cameraManager.getRecordPath());
             mMediaRecorder.prepare();
         } catch (Exception e) {
             e.printStackTrace();
@@ -167,7 +168,7 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
 
     @Override
     public void onError(MediaRecorder mediaRecorder, int i, int i1) {
-        StatePPRCB statePPRCB = (StatePPRCB) mStateBaseCb;
+        IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
         statePPRCB.onRecordError(i);
     }
 

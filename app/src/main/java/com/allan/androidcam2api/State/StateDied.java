@@ -2,7 +2,7 @@ package com.allan.androidcam2api.State;
 
 import android.hardware.camera2.CameraCaptureSession;
 
-import com.allan.androidcam2api.MyCameraManager;
+import com.allan.androidcam2api.manager.MyCameraManager;
 
 /**
  * 一个特例，我只想用这个类来描述camera 没有open或者died的状态

@@ -6,6 +6,7 @@ import android.view.View;
 
 import com.allan.androidcam2api.base.IRecordCallback;
 import com.allan.androidcam2api.base.ITakePictureCallback;
+import com.allan.androidcam2api.manager.MyCameraManager;
 import com.allan.androidcam2api.utils.CamLog;
 import com.allan.androidcam2api.utils.MyToast;
 
@@ -50,7 +51,7 @@ public class MainActivityRecordPresent {
     private String SD_PATH = Environment.getExternalStorageDirectory().getPath();
 
     void clickOnTakePicture() {
-        MyCameraManager.me.get().takePicture(SD_PATH, "pic" + System.currentTimeMillis() + ".png", new ITakePictureCallback() {
+        MyCameraManager.instance().takePicture(SD_PATH, "pic" + System.currentTimeMillis() + ".png", new ITakePictureCallback() {
             @Override
             public void onPictureToken(String path) {
                 if (mActivity.get() != null) {
@@ -62,7 +63,7 @@ public class MainActivityRecordPresent {
 
     void clickOnRecord() {
         if (!isRecording) {
-            MyCameraManager.me.get().startRecord(SD_PATH + File.separator + "test.mp4", new IRecordCallback() {
+            MyCameraManager.instance().startRecord(SD_PATH + File.separator + "test.mp4", new IRecordCallback() {
                 @Override
                 public void onRecordStart(boolean suc) {
                     CamLog.d("onRecordStart suc " + suc);
@@ -104,7 +105,7 @@ public class MainActivityRecordPresent {
                 }
             });
         } else {
-            MyCameraManager.me.get().stopRecord();
+            MyCameraManager.instance().stopRecord();
         }
     }
 

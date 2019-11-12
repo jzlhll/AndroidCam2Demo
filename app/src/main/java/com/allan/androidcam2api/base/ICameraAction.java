@@ -1,7 +1,7 @@
 package com.allan.androidcam2api.base;
 
 /**
- * MyCamera的方法抽象
+ * MyCameraManager的方法抽象
  *
  * @code MyCamera
  */

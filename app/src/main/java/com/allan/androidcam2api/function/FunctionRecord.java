@@ -1,4 +1,6 @@
-package com.allan.androidcam2api.base;
+package com.allan.androidcam2api.function;
+
+import com.allan.androidcam2api.base.IRecordCallback;
 
 public class FunctionRecord {
     public IRecordCallback func;

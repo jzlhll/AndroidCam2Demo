@@ -4,7 +4,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.view.Surface;
 
-import com.allan.androidcam2api.MyCameraManager;
+import com.allan.androidcam2api.manager.MyCameraManager;
 import com.allan.androidcam2api.utils.CamLog;
 
 import java.util.List;
@@ -27,14 +27,14 @@ public abstract class AbstractStateBase {
         return FeatureUtil.FEATURE_NONE;
     }
 
-    protected MyCameraManager camera;
+    protected MyCameraManager cameraManager;
 
     protected IStateBaseCallback mStateBaseCb;
 
     protected List<Surface> camSurfaces;
 
     public AbstractStateBase(MyCameraManager mc) {
-        camera = mc;
+        cameraManager = mc;
         createSurfaces();
     }
 
@@ -54,10 +54,10 @@ public abstract class AbstractStateBase {
     protected abstract void addTarget();
 
     public void closeSession() {
-        if (camera != null) {
-            if (camera.camSession != null) {
-                camera.camSession.close();
-                camera.camSession = null;
+        if (cameraManager != null) {
+            if (cameraManager.getCamSession() != null) {
+                cameraManager.getCamSession().close();
+                cameraManager.setCamSession(null);
             } else {
                 CamLog.d("no camera cam session");
             }
@@ -89,9 +89,9 @@ public abstract class AbstractStateBase {
     public boolean createSession(IStateBaseCallback cb) {
         mStateBaseCb = cb;
         try {
-            camera.previewBuilder = camera.getCameraDevice().createCaptureRequest(getTemplateType());
+            cameraManager.setPreviewBuilder(cameraManager.getCameraDevice().createCaptureRequest(getTemplateType()));
             addTarget();
-            camera.getCameraDevice().createCaptureSession(camSurfaces, createStateCallback(), MyCameraManager.me.get().getHandler());
+            cameraManager.getCameraDevice().createCaptureSession(camSurfaces, createStateCallback(), cameraManager.getHandler());
         } catch (Exception e) {
             e.printStackTrace();
             return false;

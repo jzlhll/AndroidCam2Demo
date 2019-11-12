@@ -1,4 +1,6 @@
-package com.allan.androidcam2api.base;
+package com.allan.androidcam2api.function;
+
+import com.allan.androidcam2api.base.ITakePictureCallback;
 
 public class FunctionTakePicture {
     public ITakePictureCallback func;
