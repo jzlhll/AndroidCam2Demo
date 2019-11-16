@@ -29,12 +29,12 @@ public class StatePictureAndPreview extends StatePreview implements ImageReader.
     }
 
     @Override
-    protected void addTarget() {
+    protected void step2_addTargets() {
         cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(0));
     }
 
     @Override
-    protected void createSurfaces() {
+    protected void step0_createSurfaces() {
         if (cameraManager.getCameraCharacteristics() == null) {
             throw new RuntimeException("No Camera Charact!");
         }

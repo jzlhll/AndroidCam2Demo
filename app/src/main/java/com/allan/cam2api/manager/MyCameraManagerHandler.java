@@ -51,8 +51,19 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
     static final int TRANSMIT_TO_MODE_PREVIEW = 102;
     static final int TRANSMIT_TO_MODE_PICTURE_PREVIEW = 103;
 
+    private int mDefaultTransmitIndex;
+
     MyCameraManagerHandler(MyCameraManager manager, Context context) {
+        init(manager, context, TRANSMIT_TO_MODE_PICTURE_PREVIEW);
+    }
+
+    MyCameraManagerHandler(MyCameraManager manager, Context context, int defaultTransmitIndex) {
+        init(manager, context, defaultTransmitIndex);
+    }
+
+    private void init(MyCameraManager manager, Context context, int defaultTransmitIndex) {
         mManager = manager;
+        mDefaultTransmitIndex = defaultTransmitIndex;
         mWfContext = new WeakReference<>(context);
         mSubThread = new HandlerThread("Camera-thread");
         mSubThread.start();
@@ -70,7 +81,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
             mManager.setCameraDevice(camera);
-            camHandler.sendEmptyMessage(TRANSMIT_TO_MODE_PICTURE_PREVIEW); //TODO 默认打开跳转到预览+牌照模式 不带拍照功能
+            camHandler.sendEmptyMessage(mDefaultTransmitIndex);
         }
 
         @Override
@@ -120,6 +131,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                 mManager.setCurrentState(new StateDied(mManager));
 
                 try {
+                    assert manager != null;
                     mManager.setCameraCharacteristics(manager.getCameraCharacteristics("" + camId));
                     StreamConfigurationMap map = mManager.getCameraCharacteristics().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                     if (map == null) {
@@ -128,9 +140,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                     }
 
                     manager.openCamera("" + camId, mCameraStateCallback, camHandler);
-                } catch (CameraAccessException | NullPointerException e) {
-                    e.printStackTrace();
-                } catch (SecurityException e) {
+                } catch (CameraAccessException | NullPointerException | SecurityException e) {
                     e.printStackTrace();
                 }
             }

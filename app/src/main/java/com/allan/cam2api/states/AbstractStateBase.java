@@ -40,7 +40,7 @@ public abstract class AbstractStateBase {
 
     public AbstractStateBase(MyCameraManager mc) {
         cameraManager = mc;
-        createSurfaces();
+        step0_createSurfaces();
     }
 
     /**
@@ -49,14 +49,14 @@ public abstract class AbstractStateBase {
      * 在camera open之后，session创建之前
      * 根据不同的state，组合不同的surface
      */
-    protected abstract void createSurfaces();
+    protected abstract void step0_createSurfaces();
 
     /**
      * 根据不同的state，贴入不同的surface
      * <p>
      * 你不应该调用它，只需要实现它
      */
-    protected abstract void addTarget();
+    protected abstract void step2_addTargets();
 
     public void closeSession() {
         if (cameraManager != null) {
@@ -77,7 +77,7 @@ public abstract class AbstractStateBase {
      * 不同的session下有不同的模式
      * 子类可以根据需要覆写该方法。
      */
-    protected int getTemplateType() {
+    protected int step1_getTemplateType() {
         return CameraDevice.TEMPLATE_PREVIEW;
     }
 
@@ -91,11 +91,11 @@ public abstract class AbstractStateBase {
      * 该方法用于camera opened以后，创建preview、picture和record等的会话
      * 且session只有一个
      */
-    public boolean createSession(IStateBaseCallback cb) {
+    public final boolean createSession(IStateBaseCallback cb) {
         mStateBaseCb = cb;
         try {
-            cameraManager.setPreviewBuilder(cameraManager.getCameraDevice().createCaptureRequest(getTemplateType()));
-            addTarget();
+            cameraManager.setPreviewBuilder(cameraManager.getCameraDevice().createCaptureRequest(step1_getTemplateType()));
+            step2_addTargets();
             cameraManager.getCameraDevice().createCaptureSession(camSurfaces, createStateCallback(), cameraManager.getHandler());
         } catch (Exception e) {
             e.printStackTrace();

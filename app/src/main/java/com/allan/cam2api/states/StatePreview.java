@@ -26,7 +26,7 @@ public class StatePreview extends AbstractStateBase {
     }
 
     @Override
-    protected void createSurfaces() {
+    protected void step0_createSurfaces() {
         camSurfaces = new ArrayList<>();
         setSize(1920, 1080); //这里故意设置一些不同的分辨率,让不同的模式下有不同
         //其实我们可能希望拍照和预览和录像都保持preview size的不变。则这里设置好即可。
@@ -34,7 +34,7 @@ public class StatePreview extends AbstractStateBase {
     }
 
     @Override
-    protected void addTarget() {
+    protected void step2_addTargets() {
         for (Surface su : camSurfaces) {
             cameraManager.getPreviewBuilder().addTarget(su);
         }

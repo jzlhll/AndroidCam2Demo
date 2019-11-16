@@ -43,7 +43,7 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
     }
 
     @Override
-    protected void addTarget() {
+    protected void step2_addTargets() {
         cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(0)); //将preview和record的surface传入
         cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(2));
     }
@@ -78,13 +78,8 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
     }
 
     @Override
-    protected int getTemplateType() {
+    protected int step1_getTemplateType() {
         return CameraDevice.TEMPLATE_RECORD;
-    }
-
-    @Override
-    public boolean createSession(IStateBaseCallback cb) {
-        return super.createSession(cb);
     }
 
     @Override
@@ -100,8 +95,8 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
     }
 
     @Override
-    protected void createSurfaces() {
-        super.createSurfaces();
+    protected void step0_createSurfaces() {
+        super.step0_createSurfaces();
         try {
             mMediaRecorder = new MediaRecorder();
             mMediaRecorder.setOnErrorListener(this);

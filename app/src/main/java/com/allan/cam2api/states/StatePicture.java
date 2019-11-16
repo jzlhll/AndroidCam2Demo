@@ -25,24 +25,29 @@ public class StatePicture extends AbstractStateBase implements ImageReader.OnIma
     }
 
     @Override
-    protected void addTarget() {
-        cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(0));
-    }
-
-    @Override
-    protected void createSurfaces() {
+    protected void step0_createSurfaces() {
         if (cameraManager.getCameraCharacteristics() == null) {
             throw new RuntimeException("No Camera Charact!");
         }
         camSurfaces = new ArrayList<>();
         Size needSize = setSize(1920, 1080);
-        camSurfaces.add(cameraManager.getSurface());
         if (mImageReader == null) {
             //**** width和height要传入正确，否则，preview就变大小
-            mImageReader = ImageReader.newInstance(needSize.getWidth(), needSize.getHeight(), ImageFormat.JPEG, 1); //最大的图片的个数
+            mImageReader = ImageReader.newInstance(needSize.getWidth(), needSize.getHeight(), ImageFormat.NV21, 3); //最大的图片的个数
             mImageReader.setOnImageAvailableListener(this, cameraManager.getHandler());
         }
+
         camSurfaces.add(mImageReader.getSurface()); //创建并添加拍照surface
+    }
+
+    @Override
+    protected int step1_getTemplateType() {
+        return CameraDevice.TEMPLATE_STILL_CAPTURE;
+    }
+
+    @Override
+    protected void step2_addTargets() {
+        cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(0));
     }
 
     @Override

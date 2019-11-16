@@ -18,11 +18,11 @@ public class StateDied extends AbstractStateBase {
     }
 
     @Override
-    protected void createSurfaces() {
+    protected void step0_createSurfaces() {
     }
 
     @Override
-    protected void addTarget() {
+    protected void step2_addTargets() {
 
     }
 
