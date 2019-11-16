@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Cam2ApiDemo</string>
+    <string name="action_picture_only">"无预览|流|拍照"</string>
+    <string name="action_preview_pic">"系统预览|拍照"</string>
+    <string name="action_preview">"系统预览"</string>
+    <string name="action_record">"系统预览|录像|拍照"</string>
+    <string name="permission_get_accounts_hint">没有此权限，无法开启这个功能，请开启权限。账号</string>
+    <string name="permission_read_phone_hint">没有此权限，无法开启这个功能，请开启权限。读取状态</string>
+    <string name="permission_call_phone_hint">没有此权限，无法开启这个功能，请开启权限。打电话</string>
+    <string name="permission_camera_hint">没有此权限，无法开启这个功能，请开启权限。摄像头</string>
+    <string name="permission_access_fine_location_hint">没有此权限，无法开启这个功能，请开启权限。定位</string>
+    <string name="permission_access_coarse_location_hint">没有此权限，无法开启这个功能，请开启权限。定位</string>
+    <string name="permission_read_external_hint">没有此权限，无法开启这个功能，请开启权限。读取存储</string>
+    <string name="permission_white_external_hint">没有此权限，无法开启这个功能，请开启权限。写存储</string>
+    <string name="permission_recode_audio_hint">没有此权限，无法开启这个功能，请开启权限。录音</string>
+</resources>

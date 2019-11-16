@@ -1,4 +1,4 @@
-package com.allan.cam2api.manager;
+package com.allan.cam2api;
 
 import android.content.Context;
 import android.hardware.camera2.CameraCaptureSession;
@@ -9,25 +9,26 @@ import android.os.Handler;
 import android.view.Surface;
 import android.view.View;
 
-import com.allan.cam2api.states.StateDied;
 import com.allan.cam2api.function.FunctionRecord;
 import com.allan.cam2api.function.FunctionTakePicture;
 import com.allan.cam2api.base.ICameraAction;
 import com.allan.cam2api.base.IRecordCallback;
 import com.allan.cam2api.states.AbstractStateBase;
 import com.allan.cam2api.base.ITakePictureCallback;
+import com.allan.cam2api.states.image.TakePictureBuilder;
+import com.allan.cam2api.utils.CamLog;
 import com.allan.cam2api.utils.Singleton;
 import com.allan.cam2api.cameraview.CameraViewDelegate;
 
 import java.util.ArrayList;
 
-import static com.allan.cam2api.manager.MyCameraManagerHandler.ACTION_CAMERA_CLOSE;
-import static com.allan.cam2api.manager.MyCameraManagerHandler.ACTION_CAMERA_OPEN;
-import static com.allan.cam2api.manager.MyCameraManagerHandler.ACTION_START_REC;
-import static com.allan.cam2api.manager.MyCameraManagerHandler.ACTION_STOP_REC;
-import static com.allan.cam2api.manager.MyCameraManagerHandler.ACTION_TAKE_PICTURE;
-import static com.allan.cam2api.manager.MyCameraManagerHandler.TRANSMIT_TO_MODE_PICTURE_PREVIEW;
-import static com.allan.cam2api.manager.MyCameraManagerHandler.TRANSMIT_TO_MODE_PREVIEW;
+import static com.allan.cam2api.MyCameraManagerHandler.ACTION_CAMERA_CLOSE;
+import static com.allan.cam2api.MyCameraManagerHandler.ACTION_CAMERA_OPEN;
+import static com.allan.cam2api.MyCameraManagerHandler.ACTION_START_REC;
+import static com.allan.cam2api.MyCameraManagerHandler.ACTION_STOP_REC;
+import static com.allan.cam2api.MyCameraManagerHandler.ACTION_TAKE_PICTURE;
+import static com.allan.cam2api.MyCameraManagerHandler.TRANSMIT_TO_MODE_PICTURE_PREVIEW;
+import static com.allan.cam2api.MyCameraManagerHandler.TRANSMIT_TO_MODE_PREVIEW;
 
 public class MyCameraManager implements ICameraAction {
     private static final Singleton<MyCameraManager> me = new Singleton<MyCameraManager>() {
@@ -60,11 +61,12 @@ public class MyCameraManager implements ICameraAction {
     private int mCameraId;
     private CaptureRequest.Builder previewBuilder = null;
     private CameraCaptureSession camSession = null;
+
     /////////************** end
 
-    public void init(Context context, CameraViewDelegate vd) {
+    public void init(Context context, CameraViewDelegate vd, int defaultTransmitId) {
         mCameraView = vd;
-        mCamHandler = new MyCameraManagerHandler(MyCameraManager.this, context);
+        mCamHandler = new MyCameraManagerHandler(MyCameraManager.this, context, defaultTransmitId);
     }
 
     public void destroy() {
@@ -79,6 +81,7 @@ public class MyCameraManager implements ICameraAction {
 
     @Override
     public void closeCamera() {
+        CamLog.d("close Camera in manage!");
         if (mCamHandler != null && mCamHandler.getHandler() != null) {
             mCamHandler.getHandler().removeCallbacksAndMessages(null);
             mCamHandler.getHandler().sendEmptyMessage(ACTION_CAMERA_CLOSE);
@@ -135,7 +138,9 @@ public class MyCameraManager implements ICameraAction {
         if (mModChanges == null) {
             mModChanges = new ArrayList<>();
         }
-        mModChanges.add(change);
+        if (!mModChanges.contains(change)) {
+            mModChanges.add(change);
+        }
     }
 
     public synchronized void removeModChanged(ModChange change) {
@@ -175,7 +180,7 @@ public class MyCameraManager implements ICameraAction {
     /**
      * 拿到当前View的Surface
      */
-    public Surface getSurface() {
+    public Surface getRealViewSurface() {
         return mCameraView.getSurface();
     }
 

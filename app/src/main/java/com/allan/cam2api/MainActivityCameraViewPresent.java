@@ -2,7 +2,6 @@ package com.allan.cam2api;
 
 import android.view.View;
 
-import com.allan.cam2api.manager.MyCameraManager;
 import com.allan.cam2api.cameraview.CameraViewDelegate;
 import com.allan.cam2api.cameraview.IViewStatusChangeCallback;
 import com.allan.cam2api.utils.CamLog;
@@ -20,24 +19,27 @@ public class MainActivityCameraViewPresent implements IViewStatusChangeCallback{
     void setCameraView(View view) {
         mCameraView = new CameraViewDelegate(view);
         mCameraView.setCallback(this);
-
     }
 
-    public void openCamera() {
+    void openCameraIn() {
         MyCameraManager.instance().openCamera();
     }
 
-    @Override
-    public void onSurfaceCreated() {
+    private void _SurfaceCreated(int transmitId) {
         if (mActivity.get() != null) {
             MainActivity mainActivity = mActivity.get();
             MyCameraManager myCameraManager = (MyCameraManager) MyCameraManager.instance();
             //这里进行强转。不应该使用。
             CamLog.d("Inited!!!!");
-            myCameraManager.init(mainActivity, mCameraView);
+            myCameraManager.init(mainActivity, mCameraView, transmitId);
             myCameraManager.addModChanged(mainActivity);
-            mainActivity.openCamera();
+            mActivity.get().openCamera();
         }
+    }
+
+    @Override
+    public void onSurfaceCreated() {
+        _SurfaceCreated(MyCameraManagerHandler.TRANSMIT_TO_MODE_PICTURE_PREVIEW);
     }
 
     @Override

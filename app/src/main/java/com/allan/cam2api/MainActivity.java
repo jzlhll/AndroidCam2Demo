@@ -1,5 +1,4 @@
 package com.allan.cam2api;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,7 +11,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.allan.cam2api.manager.MyCameraManager;
 import com.allan.cam2api.utils.CamLog;
 import com.allan.cam2api.utils.MyToast;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -25,6 +23,7 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
     private FloatingActionButton mTabPictureBtn, mRecordBtn;
 
     private View mView;
+
     MainActivityCameraViewPresent mCamViewPresent;
     MainActivityRecordPresent mRecordPresent;
 
@@ -77,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
         mRecordBtn.setOnClickListener(mClickListener);
 
         mTimeView = findViewById(R.id.timeTv);
+
+        setMenuTitles();
     }
 
     @Override
@@ -104,39 +105,21 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
         return super.onOptionsItemSelected(item);
     }
 
-    private static final int RC_ALL_PERMISSION = 101;
-    private static final boolean BIG_THAN_6_0 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-    private boolean mIsHasPermission = false;
-
-    @AfterPermissionGranted(RC_ALL_PERMISSION)
-    public void openCamera() {
-        if (BIG_THAN_6_0) {
-            ModelPermissions mp = new ModelPermissions();
-            if (EasyPermissions.hasPermissions(this, mp.getPermissions())) {
-                // Already have permission, do the thing
-                // ...
-                if (!mIsHasPermission) {
-                    mIsHasPermission = true;
-                    CamLog.d("has permission setCameraVieeeeeewww");
-                    mCamViewPresent.openCamera();
-                }
-            } else {
-                CamLog.d("request setCameraVieeeeeewww");
-                // Do not have permissions, request them now
-                EasyPermissions.requestPermissions(this, mp.getShowWords(),
-                        RC_ALL_PERMISSION, mp.getPermissions());
-            }
-        } else {
-            CamLog.d("setCameraVieeeeeewww");
-            mCamViewPresent.openCamera();
-        }
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         // Forward results to EasyPermissions
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    public static String MODE_PREVIEW;
+    public static String MODE_PREVIEW_PICTURE;
+    public static String MODE_PicturePreviewVideo;
+
+    private void setMenuTitles() {
+        MODE_PREVIEW_PICTURE = getResources().getString(R.string.action_preview_pic);
+        MODE_PREVIEW = getResources().getString(R.string.action_preview);
+        MODE_PicturePreviewVideo = getResources().getString(R.string.action_record);
     }
 
     @Override
@@ -146,26 +129,53 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
             public void run() {
                 MyToast.toastNew(getApplicationContext(), mView, newMod);
                 setTitle(newMod);
-                switch (newMod) {
-                    case "Preview": {
-                        mRecordBtn.hide();
-                        mTabPictureBtn.hide();;
-                    }
-                    break;
-                    case "Picture": {
-                        mRecordBtn.hide();;
-                        mTabPictureBtn.show();
-                    }
-                    break;
-                    case "Picture&Preview&Video":
-                    case "Picture&Preview": {
-                        mRecordBtn.show();
-                        mTabPictureBtn.show();
-                    }
-                    break;
+                if (newMod.equals(MODE_PREVIEW)) {
+                    mRecordBtn.hide();
+                    mTabPictureBtn.hide();
+                } else if (newMod.equals(MODE_PicturePreviewVideo) || newMod.equals(MODE_PREVIEW_PICTURE)) {
+                    mRecordBtn.show();
+                    mTabPictureBtn.show();
                 }
             }
         });
     }
 
+    private static final int RC_ALL_PERMISSION = 101;
+    private static final boolean BIG_THAN_6_0 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+    private boolean mIsHasPermission = false;
+
+    @AfterPermissionGranted(RC_ALL_PERMISSION) //这个方法还不能放到其他地方
+    public void openCamera() {
+        if (BIG_THAN_6_0) {
+            ModelPermissions mp = new ModelPermissions();
+            if (EasyPermissions.hasPermissions(this, mp.getPermissions())) {
+                // Already have permission, do the thing
+                // ...
+                if (!mIsHasPermission) {
+                    mIsHasPermission = true;
+                    CamLog.d("has permission setCameraVieeeeeewww");
+                    mCamViewPresent.openCameraIn();
+                }
+            } else {
+                CamLog.d("request setCameraVieeeeeewww");
+                // Do not have permissions, request them now
+                EasyPermissions.requestPermissions(this, mp.getShowWords(),
+                        RC_ALL_PERMISSION, mp.getPermissions());
+            }
+        } else {
+            CamLog.d("setCameraVieeeeeewww");
+            mCamViewPresent.openCameraIn();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MyCameraManager.instance().closeCamera();
+    }
 }

@@ -14,12 +14,13 @@ import android.util.Size;
 import androidx.annotation.NonNull;
 
 import com.allan.cam2api.states.record.IActionRecord;
-import com.allan.cam2api.manager.MyCameraManager;
+import com.allan.cam2api.MyCameraManager;
 import com.allan.cam2api.utils.CamLog;
 
 public class StatePictureAndRecordAndPreview extends StatePictureAndPreview implements MediaRecorder.OnErrorListener,
-        MediaRecorder.OnInfoListener, IActionRecord {
-    public interface IStateTakePictureRecordCallback extends StatePictureAndPreview.IStateTakePictureCallback {
+        MediaRecorder.OnInfoListener, IActionRecord{
+
+    public interface IStateTakePictureRecordCallback extends StatePictureAndPreview.IStatePreviewCallback {
         void onRecordStart(boolean suc);
 
         void onRecordError(int err);
@@ -34,64 +35,8 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
     }
 
     @Override
-    public int getId() {
+    public int getFeatureId() {
         return FeatureUtil.FEATURE_PICTURE | FeatureUtil.FEATURE_PREVIEW | FeatureUtil.FEATURE_RECORD_VIDEO;
-    }
-
-    public MediaRecorder getMediaRecorder() {
-        return mMediaRecorder;
-    }
-
-    @Override
-    protected void step2_addTargets() {
-        cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(0)); //将preview和record的surface传入
-        cameraManager.getPreviewBuilder().addTarget(camSurfaces.get(2));
-    }
-
-    @Override
-    protected CameraCaptureSession.StateCallback createStateCallback() {
-        return new CameraCaptureSession.StateCallback() {
-            @Override
-            public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                cameraManager.setCamSession(cameraCaptureSession);
-                cameraManager.getPreviewBuilder().set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                try {
-                    cameraManager.getCamSession().setRepeatingRequest( cameraManager.getPreviewBuilder().build(),
-                            null, cameraManager.getHandler());
-                    if (mMediaRecorder != null) {
-                        mMediaRecorder.start();
-                    } else {
-                        CamLog.e("error!!!! mediaRecord is null");
-                    }
-                    IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
-                    statePPRCB.onRecordStart(true);
-                } catch (CameraAccessException e) {
-                }
-            }
-
-            @Override
-            public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
-                statePPRCB.onRecordStart(false);
-            }
-        };
-    }
-
-    @Override
-    protected int step1_getTemplateType() {
-        return CameraDevice.TEMPLATE_RECORD;
-    }
-
-    @Override
-    public void stopRecord() {
-        if (mMediaRecorder == null) return;
-        mMediaRecorder.setOnErrorListener(null);
-        mMediaRecorder.setOnInfoListener(null);
-        mMediaRecorder.stop();
-        mMediaRecorder.release();
-        mMediaRecorder = null;
-        IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
-        statePPRCB.onRecordEnd(cameraManager.getRecordFilePath());
     }
 
     @Override
@@ -154,8 +99,56 @@ public class StatePictureAndRecordAndPreview extends StatePictureAndPreview impl
                 mMediaRecorder = null;
             }
         }
+        //由于super中有添加了preview和拍照的surface。这里处理好录像surface即可
+        assert mMediaRecorder != null;
+        addTargetSurfaces.add(mMediaRecorder.getSurface());
+        allIncludePictureSurfaces.add(mMediaRecorder.getSurface());
+    }
 
-        camSurfaces.add(mMediaRecorder.getSurface());
+    @Override
+    protected CameraCaptureSession.StateCallback createCameraCaptureSessionStateCallback() {
+        return new CameraCaptureSession.StateCallback() {
+            @Override
+            public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+                cameraManager.setCamSession(cameraCaptureSession);
+                cameraManager.getPreviewBuilder().set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                try {
+                    cameraManager.getCamSession().setRepeatingRequest( cameraManager.getPreviewBuilder().build(),
+                            null, cameraManager.getHandler());
+                    if (mMediaRecorder != null) {
+                        mMediaRecorder.start();
+                    } else {
+                        CamLog.e("error!!!! mediaRecord is null");
+                    }
+                    IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
+                    statePPRCB.onRecordStart(true);
+                } catch (CameraAccessException ignored) {
+                }
+            }
+
+            @Override
+            public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
+                IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
+                statePPRCB.onRecordStart(false);
+            }
+        };
+    }
+
+    @Override
+    protected int step1_getTemplateType() {
+        return CameraDevice.TEMPLATE_RECORD;
+    }
+
+    @Override
+    public synchronized void stopRecord() {
+        if (mMediaRecorder == null) return;
+        mMediaRecorder.setOnErrorListener(null);
+        mMediaRecorder.setOnInfoListener(null);
+        mMediaRecorder.stop();
+        mMediaRecorder.release();
+        mMediaRecorder = null;
+        IStateTakePictureRecordCallback statePPRCB = (IStateTakePictureRecordCallback) mStateBaseCb;
+        statePPRCB.onRecordEnd(cameraManager.getRecordFilePath());
     }
 
     @Override

@@ -6,11 +6,9 @@ import android.view.View;
 
 import com.allan.cam2api.base.IRecordCallback;
 import com.allan.cam2api.base.ITakePictureCallback;
-import com.allan.cam2api.manager.MyCameraManager;
 import com.allan.cam2api.utils.CamLog;
 import com.allan.cam2api.utils.MyToast;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
 
 public class MainActivityRecordPresent {

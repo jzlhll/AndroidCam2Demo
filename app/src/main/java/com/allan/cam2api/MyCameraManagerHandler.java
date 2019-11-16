@@ -1,4 +1,4 @@
-package com.allan.cam2api.manager;
+package com.allan.cam2api;
 
 import android.content.Context;
 import android.hardware.camera2.CameraAccessException;
@@ -39,17 +39,17 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
 
     private HandlerThread mSubThread; //camera线程
 
-    static final int ACTION_CAMERA_OPEN = 100;
-    static final int ACTION_CAMERA_CLOSE = 101;
+    static final int ACTION_CAMERA_OPEN = 11;
+    static final int ACTION_CAMERA_CLOSE = 12;
 
     static final int ACTION_START_REC = 5;  //其实就是将其他状态升级到录制状态去
     static final int TRANSMIT_TO_MODE_RECORD = ACTION_START_REC;  //其实就是将其他状态升级到录制状态去
 
-    static final int ACTION_STOP_REC = 106;
-    static final int ACTION_TAKE_PICTURE = 107;
+    static final int ACTION_TAKE_PICTURE = 21;
+    static final int ACTION_STOP_REC = 22;
 
-    static final int TRANSMIT_TO_MODE_PREVIEW = 102;
-    static final int TRANSMIT_TO_MODE_PICTURE_PREVIEW = 103;
+    public static final int TRANSMIT_TO_MODE_PREVIEW = 103;
+    public static final int TRANSMIT_TO_MODE_PICTURE_PREVIEW = 104;
 
     private int mDefaultTransmitIndex;
 
@@ -146,6 +146,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
             }
             break;
             case ACTION_CAMERA_CLOSE: {
+                CamLog.d("close Camera in ACTION_CAMERA _CLOSE!");
                 if (mManager.getCurrentState() != null) {
                     mManager.getCurrentState().closeSession();
                     mManager.setCurrentState(null);
@@ -158,7 +159,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
             break;
             case ACTION_TAKE_PICTURE: {
                 AbstractStateBase st = mManager.getCurrentState();
-                int featureId = st.getId();
+                int featureId = st.getFeatureId();
                 if ((featureId & FeatureUtil.FEATURE_PICTURE) == FeatureUtil.FEATURE_PICTURE) {
                     if (st instanceof IActionTakePicture) {
                         IActionTakePicture action = (IActionTakePicture) st;
@@ -189,26 +190,21 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                     return;
                 }
 
-                if (curSt.getId() == (FeatureUtil.FEATURE_PREVIEW |FeatureUtil.FEATURE_PICTURE)) {
+                if (curSt.getFeatureId() == (FeatureUtil.FEATURE_PREVIEW |FeatureUtil.FEATURE_PICTURE)) {
                     if (mWfContext.get() != null) {
                         MyToast.toastNew(mWfContext.get(), toastParentView, "Already in this mod");
                     }
                     return;
                 }
 
-                mManager.notifyModChange("Picture&Preview");
+                mManager.notifyModChange(MainActivity.MODE_PREVIEW_PICTURE);
                 curSt.closeSession(); //关闭session
 
                 curSt = new StatePictureAndPreview(mManager);
                 mManager.setCurrentState(curSt);
 
                 try {
-                    curSt.createSession(new StatePictureAndPreview.IStateTakePictureCallback() {
-                        @Override
-                        public void onPictureToken(String path) {
-                            CamLog.d("onToken in path" + path);
-                        }
-
+                    curSt.createSession(new StatePictureAndPreview.IStatePreviewCallback() {
                         @Override
                         public void onPreviewSucceeded() {
                             CamLog.d("onPreviewSucceeded in myacmera");
@@ -232,14 +228,14 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                     ifCurrentStNullOpenCameraFirst(msg);
                     return;
                 }
-                if (curSt.getId() == FeatureUtil.FEATURE_PREVIEW) {
+                if (curSt.getFeatureId() == FeatureUtil.FEATURE_PREVIEW) {
                     if (mWfContext.get() != null) {
                         MyToast.toastNew(mWfContext.get(), toastParentView, "Already in this mod");
                     }
                     return;
                 }
 
-                mManager.notifyModChange("Preview");
+                mManager.notifyModChange(MainActivity.MODE_PREVIEW);
                 curSt.closeSession(); //关闭session
 
                 curSt = new StatePreview(mManager);
@@ -271,7 +267,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                     ifCurrentStNullOpenCameraFirst(msg);
                     return;
                 }
-                if (curSt.getId() == (FeatureUtil.FEATURE_PICTURE | FeatureUtil.FEATURE_PREVIEW | FeatureUtil.FEATURE_RECORD_VIDEO)) {
+                if (curSt.getFeatureId() == (FeatureUtil.FEATURE_PICTURE | FeatureUtil.FEATURE_PREVIEW | FeatureUtil.FEATURE_RECORD_VIDEO)) {
                     if (mWfContext.get() != null) {
                         MyToast.toastNew(mWfContext.get(), toastParentView, "Already in this mod");
                     }
@@ -290,7 +286,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                     curSt.createSession(new StatePictureAndRecordAndPreview.IStateTakePictureRecordCallback() {
                         @Override
                         public void onRecordStart(boolean suc) {
-                            mManager.notifyModChange("Preview&pic&rec");
+                            mManager.notifyModChange(MainActivity.MODE_PicturePreviewVideo);
                             callback.onRecordStart(suc);
                         }
 
@@ -306,11 +302,6 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                             //TODO 完成后，退回之前的state，这里直接回到PreviewAndPicture
                             callback.onRecordEnd(path);
                             camHandler.sendEmptyMessage(TRANSMIT_TO_MODE_PICTURE_PREVIEW);
-                        }
-
-                        @Override
-                        public void onPictureToken(String path) {
-                            CamLog.d("rec:onToken in path" + path);
                         }
 
                         @Override
@@ -331,7 +322,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
             break;
             case ACTION_STOP_REC: {
                 if (mManager.getCurrentState() == null ||
-                        mManager.getCurrentState().getId() !=
+                        mManager.getCurrentState().getFeatureId() !=
                                 (FeatureUtil.FEATURE_PICTURE | FeatureUtil.FEATURE_PREVIEW | FeatureUtil.FEATURE_RECORD_VIDEO)) {
                     CamLog.d("为null不用工作。");
                     if (mWfContext.get() != null) {

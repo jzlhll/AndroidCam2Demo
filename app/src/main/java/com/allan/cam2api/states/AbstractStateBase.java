@@ -8,11 +8,12 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Size;
 import android.view.Surface;
 
-import com.allan.cam2api.manager.MyCameraManager;
+import com.allan.cam2api.MyCameraManager;
 import com.allan.cam2api.utils.CamLog;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 抽象类，用于描述，不同的camera session状态
@@ -22,23 +23,28 @@ public abstract class AbstractStateBase {
     /**
      * 监听创建session的状态变化
      */
-    public interface IStateBaseCallback {
+    interface IStateBaseCallback {
     }
 
     /**
      * 当前类支持的能力组合
      */
-    public int getId() {
+    public int getFeatureId() {
         return FeatureUtil.FEATURE_NONE;
     }
 
-    protected MyCameraManager cameraManager;
+    MyCameraManager cameraManager;
 
-    protected IStateBaseCallback mStateBaseCb;
+    IStateBaseCallback mStateBaseCb;
 
-    protected List<Surface> camSurfaces;
+    /**
+     * 对于在创建会话的时候，必须将所有用到的surface(包含take picture)都贴入createSession里面
+     * 与sessionSurfaces差异是：后者用于addTarget使用的时候，这是创建基础使用，不包含takePicture的ImageReader
+     */
+    List<Surface> allIncludePictureSurfaces;
+    List<Surface> addTargetSurfaces;
 
-    public AbstractStateBase(MyCameraManager mc) {
+    AbstractStateBase(MyCameraManager mc) {
         cameraManager = mc;
         step0_createSurfaces();
     }
@@ -56,7 +62,11 @@ public abstract class AbstractStateBase {
      * <p>
      * 你不应该调用它，只需要实现它
      */
-    protected abstract void step2_addTargets();
+    private void step2_addTargets() {
+        for (Surface surface : addTargetSurfaces) {
+            cameraManager.getPreviewBuilder().addTarget(surface);
+        }
+    }
 
     public void closeSession() {
         if (cameraManager != null) {
@@ -67,10 +77,15 @@ public abstract class AbstractStateBase {
                 CamLog.d("no camera cam session");
             }
         }
-        if (camSurfaces != null) {
-            camSurfaces.clear();
+        if (addTargetSurfaces != null) {
+            addTargetSurfaces.clear();
         }
-        camSurfaces = null;
+        addTargetSurfaces = null;
+
+        if (allIncludePictureSurfaces != null) {
+            allIncludePictureSurfaces.clear();
+        }
+        allIncludePictureSurfaces = null;
     }
 
     /**
@@ -85,7 +100,7 @@ public abstract class AbstractStateBase {
      * 子类必须实现，而不应该调用
      * 创建一个监听完成session的回调信息，并将StateBaseCb外部监听处理
      */
-    protected abstract CameraCaptureSession.StateCallback createStateCallback();
+    protected abstract CameraCaptureSession.StateCallback createCameraCaptureSessionStateCallback();
 
     /**
      * 该方法用于camera opened以后，创建preview、picture和record等的会话
@@ -96,7 +111,7 @@ public abstract class AbstractStateBase {
         try {
             cameraManager.setPreviewBuilder(cameraManager.getCameraDevice().createCaptureRequest(step1_getTemplateType()));
             step2_addTargets();
-            cameraManager.getCameraDevice().createCaptureSession(camSurfaces, createStateCallback(), cameraManager.getHandler());
+            cameraManager.getCameraDevice().createCaptureSession(allIncludePictureSurfaces, createCameraCaptureSessionStateCallback(), cameraManager.getHandler());
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -114,19 +129,24 @@ public abstract class AbstractStateBase {
         }
     }
 
-    protected final Size setSize(int wishWidth, int wishHeight) {
+    final Size setSize(int wishWidth, int wishHeight) {
         StreamConfigurationMap map = cameraManager.getCameraCharacteristics().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        Size[] sizes = map.getOutputSizes(ImageFormat.JPEG);
+        Size[] sizes = null;
+        if (map != null) {
+            sizes = map.getOutputSizes(ImageFormat.JPEG);
+        }
         Size needSize = null;
 
-        for (Size size : sizes) {
-            if (needSize == null) {
-                needSize = size;
-            }
+        if (sizes != null) {
+            for (Size size : sizes) {
+                if (needSize == null) {
+                    needSize = size;
+                }
 
-            if (size.getHeight() == wishHeight || size.getHeight() == wishWidth) { //TODO 这里是随便写写的。你可以采用google的compare class
-                needSize = size;
-                break;
+                if (size.getHeight() == wishHeight || size.getHeight() == wishWidth) { //TODO 这里是随便写写的。你可以采用google的compare class
+                    needSize = size;
+                    break;
+                }
             }
         }
 

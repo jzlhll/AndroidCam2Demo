@@ -2,12 +2,14 @@ package com.allan.cam2api.states.image;
 
 import android.media.Image;
 
+import com.allan.cam2api.utils.CamLog;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class ImageSaver implements Runnable{
+public class ImageSaverRunnable implements Runnable{
 
     /**
      * The JPEG image
@@ -18,7 +20,7 @@ public class ImageSaver implements Runnable{
      */
     private final File mFile;
 
-    public ImageSaver(Image image, File file) {
+    public ImageSaverRunnable(Image image, File file) {
         mImage = image;
         mFile = file;
     }
@@ -28,21 +30,14 @@ public class ImageSaver implements Runnable{
         ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
-        FileOutputStream output = null;
-        try {
-            output = new FileOutputStream(mFile);
+        CamLog.d("Image Saverrrr buffers " + bytes.length);
+        try (FileOutputStream output = new FileOutputStream(mFile)) {
             output.write(bytes);
+            CamLog.d("Image Saverrrr buffers File " + mFile);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             mImage.close();
-            if (null != output) {
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 }

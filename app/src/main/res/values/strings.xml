@@ -1,7 +1,10 @@
 <resources>
-    <string name="app_name">AndroidCam2Api</string>
-    <string name="action_preview_pic">PreviewPicture</string>
+    <string name="app_name">Cam2ApiDemo</string>
+    <string name="action_picture_only">NoPreview|buffer|picture</string>
+    <string name="action_preview_pic">Preview|picture</string>
     <string name="action_preview">Preview</string>
+    <string name="action_record">Preview|record|picture</string>
+
     <string-array name="permissions">
         <item>@string/permission_recode_audio_hint</item>
         <item>@string/permission_get_accounts_hint</item>
