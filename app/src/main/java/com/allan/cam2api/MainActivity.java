@@ -1,5 +1,4 @@
 package com.allan.cam2api;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,11 +17,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
+import static com.allan.cam2api.MainActivityCameraViewPresent.RC_ALL_PERMISSION;
+
 public class MainActivity extends AppCompatActivity implements MyCameraManager.ModChange {
-
     private FloatingActionButton mTabPictureBtn, mRecordBtn;
-
-    private View mView;
 
     MainActivityCameraViewPresent mCamViewPresent;
     MainActivityRecordPresent mRecordPresent;
@@ -55,16 +53,25 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
         }
     };
 
+    public static String MODE_PREVIEW;
+    public static String MODE_PREVIEW_PICTURE;
+    public static String MODE_PicturePreviewVideo;
+    public static String MODE_PICTURE_NO_PREVIW;
+
+    private void setMenuTitles() {
+        MODE_PICTURE_NO_PREVIW = getResources().getString(R.string.action_picture_only);
+        MODE_PREVIEW_PICTURE = getResources().getString(R.string.action_preview_pic);
+        MODE_PREVIEW = getResources().getString(R.string.action_preview);
+        MODE_PicturePreviewVideo = getResources().getString(R.string.action_record);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
-        mCamViewPresent = new MainActivityCameraViewPresent(this);
-        mRecordPresent = new MainActivityRecordPresent(this);
 
-        mView = findViewById(R.id.surfaceView);
-        mCamViewPresent.setCameraView(mView);
+        mRecordPresent = new MainActivityRecordPresent(this);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -89,20 +96,27 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        //noinspection SimplifiableIfStatement
+
+        String gotoMod = null;
         if (id == R.id.action_preview) {
-            MyCameraManager.instance().transmitModPreview();
-            return true;
+            gotoMod = MODE_PREVIEW;
         } else if (id == R.id.action_preview_pic) {
-            MyCameraManager.instance().transmitModPicturePreview();
-            return true;
+            gotoMod = MODE_PREVIEW_PICTURE;
+        } else if (id == R.id.action_picture_only) {
+            gotoMod = MODE_PICTURE_NO_PREVIW;
+        }
+
+        if (gotoMod != null) {
+            mCamViewPresent.transmitToWordsState(gotoMod);
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @AfterPermissionGranted(RC_ALL_PERMISSION) //这个注释方法还不能放到其他地方，必须放在activity中
+    private void openCameraPresent() {
+        mCamViewPresent.openCamera();
     }
 
     @Override
@@ -112,22 +126,12 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
     }
 
-    public static String MODE_PREVIEW;
-    public static String MODE_PREVIEW_PICTURE;
-    public static String MODE_PicturePreviewVideo;
-
-    private void setMenuTitles() {
-        MODE_PREVIEW_PICTURE = getResources().getString(R.string.action_preview_pic);
-        MODE_PREVIEW = getResources().getString(R.string.action_preview);
-        MODE_PicturePreviewVideo = getResources().getString(R.string.action_record);
-    }
-
     @Override
     public void onModChanged(final String newMod) { //监听了MyCamera的模式变化
-        mView.post(new Runnable() {
+        mTimeView.post(new Runnable() {
             @Override
             public void run() {
-                MyToast.toastNew(getApplicationContext(), mView, newMod);
+                MyToast.toastNew(getApplicationContext(), mTimeView, newMod);
                 setTitle(newMod);
                 if (newMod.equals(MODE_PREVIEW)) {
                     mRecordBtn.hide();
@@ -140,42 +144,16 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
         });
     }
 
-    private static final int RC_ALL_PERMISSION = 101;
-    private static final boolean BIG_THAN_6_0 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-    private boolean mIsHasPermission = false;
-
-    @AfterPermissionGranted(RC_ALL_PERMISSION) //这个方法还不能放到其他地方
-    public void openCamera() {
-        if (BIG_THAN_6_0) {
-            ModelPermissions mp = new ModelPermissions();
-            if (EasyPermissions.hasPermissions(this, mp.getPermissions())) {
-                // Already have permission, do the thing
-                // ...
-                if (!mIsHasPermission) {
-                    mIsHasPermission = true;
-                    CamLog.d("has permission setCameraVieeeeeewww");
-                    mCamViewPresent.openCameraIn();
-                }
-            } else {
-                CamLog.d("request setCameraVieeeeeewww");
-                // Do not have permissions, request them now
-                EasyPermissions.requestPermissions(this, mp.getShowWords(),
-                        RC_ALL_PERMISSION, mp.getPermissions());
-            }
-        } else {
-            CamLog.d("setCameraVieeeeeewww");
-            mCamViewPresent.openCameraIn();
-        }
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
+        mCamViewPresent = new MainActivityCameraViewPresent(this);
+        mCamViewPresent.initCameraView(findViewById(R.id.surfaceView));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        MyCameraManager.instance().closeCamera();
+        mCamViewPresent.destroy();
     }
 }

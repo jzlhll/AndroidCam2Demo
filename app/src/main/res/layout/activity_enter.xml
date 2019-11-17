@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/enterBtn1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:text="传统Surface拍照录像"
+        android:onClick="onClickedEnterButton"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/enterBtn2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:onClick="onClickedEnterButton"
+        android:text="偷拍|buffer回调|直播"
+        android:textSize="20sp" />
+</LinearLayout>

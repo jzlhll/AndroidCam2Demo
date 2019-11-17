@@ -14,5 +14,10 @@
         android:title="@string/action_preview_pic"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_picture_only"
+        android:orderInCategory="100"
+        android:title="@string/action_picture_only"
+        app:showAsAction="never" />
 
 </menu>

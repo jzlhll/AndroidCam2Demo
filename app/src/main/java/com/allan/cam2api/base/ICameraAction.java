@@ -6,15 +6,16 @@ package com.allan.cam2api.base;
  * @code MyCamera
  */
 public interface ICameraAction {
-   void openCamera();
+    void openCamera();
 
-   void closeCamera();
+    void closeSession();
 
-   void transmitModPreview();
+    void closeCamera();
 
-   void transmitModPicturePreview();
+    void transmitModById(int transmitId);
 
     void startRecord(String path, String name, IRecordCallback callback);
+
     void stopRecord();
 
     void takePicture(String path, String name, ITakePictureCallback callback);

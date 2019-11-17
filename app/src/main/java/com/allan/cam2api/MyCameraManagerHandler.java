@@ -41,6 +41,7 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
 
     static final int ACTION_CAMERA_OPEN = 11;
     static final int ACTION_CAMERA_CLOSE = 12;
+    static final int ACTION_CLOSE_SESSION = 13;
 
     static final int ACTION_START_REC = 5;  //其实就是将其他状态升级到录制状态去
     static final int TRANSMIT_TO_MODE_RECORD = ACTION_START_REC;  //其实就是将其他状态升级到录制状态去
@@ -50,6 +51,26 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
 
     public static final int TRANSMIT_TO_MODE_PREVIEW = 103;
     public static final int TRANSMIT_TO_MODE_PICTURE_PREVIEW = 104;
+
+    // region convert words transmitId
+    public static int convertWordsToTransmitId(String words) {
+        if (words == null || words.equals(MainActivity.MODE_PICTURE_NO_PREVIW)) {
+            return TRANSMIT_TO_MODE_PREVIEW;
+        }
+
+        //TODO 这个方法主要是给默认加载使用；录像一上来就当做预览即可
+        if (words.equals(MainActivity.MODE_PicturePreviewVideo)
+            || words.equals(MainActivity.MODE_PREVIEW_PICTURE)) {
+            return TRANSMIT_TO_MODE_PICTURE_PREVIEW;
+        }
+
+        if (words.equals(MainActivity.MODE_PREVIEW)) {
+            return TRANSMIT_TO_MODE_PREVIEW;
+        }
+
+        return TRANSMIT_TO_MODE_PREVIEW; //不存在或者修改了都复原
+    }
+    // endregion
 
     private int mDefaultTransmitIndex;
 
@@ -157,6 +178,13 @@ public class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                 }
             }
             break;
+            case ACTION_CLOSE_SESSION:
+                CamLog.d("close Camera in ACTION_CAMERA _CLOSE!");
+                if (mManager.getCurrentState() != null) {
+                    mManager.getCurrentState().closeSession();
+                    mManager.setCurrentState(new StateDied(mManager));
+                }
+                break;
             case ACTION_TAKE_PICTURE: {
                 AbstractStateBase st = mManager.getCurrentState();
                 int featureId = st.getFeatureId();

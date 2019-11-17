@@ -24,6 +24,7 @@ import java.util.ArrayList;
 
 import static com.allan.cam2api.MyCameraManagerHandler.ACTION_CAMERA_CLOSE;
 import static com.allan.cam2api.MyCameraManagerHandler.ACTION_CAMERA_OPEN;
+import static com.allan.cam2api.MyCameraManagerHandler.ACTION_CLOSE_SESSION;
 import static com.allan.cam2api.MyCameraManagerHandler.ACTION_START_REC;
 import static com.allan.cam2api.MyCameraManagerHandler.ACTION_STOP_REC;
 import static com.allan.cam2api.MyCameraManagerHandler.ACTION_TAKE_PICTURE;
@@ -64,9 +65,11 @@ public class MyCameraManager implements ICameraAction {
 
     /////////************** end
 
-    public void init(Context context, CameraViewDelegate vd, int defaultTransmitId) {
+    public void create(Context context, CameraViewDelegate vd, int defaultTransmitId) {
         mCameraView = vd;
-        mCamHandler = new MyCameraManagerHandler(MyCameraManager.this, context, defaultTransmitId);
+        if (mCamHandler == null) {
+            mCamHandler = new MyCameraManagerHandler(MyCameraManager.this, context, defaultTransmitId);
+        }
     }
 
     public void destroy() {
@@ -89,13 +92,16 @@ public class MyCameraManager implements ICameraAction {
     }
 
     @Override
-    public void transmitModPreview() {
-        mCamHandler.getHandler().sendEmptyMessage(TRANSMIT_TO_MODE_PREVIEW);
+    public void closeSession() {
+        CamLog.d("close Session in manage!");
+        if (mCamHandler != null && mCamHandler.getHandler() != null) {
+            mCamHandler.getHandler().sendEmptyMessage(ACTION_CLOSE_SESSION);
+        }
     }
 
     @Override
-    public void transmitModPicturePreview() {
-        mCamHandler.getHandler().sendEmptyMessage(TRANSMIT_TO_MODE_PICTURE_PREVIEW);
+    public void transmitModById(int transmitId) {
+        mCamHandler.getHandler().sendEmptyMessage(transmitId);
     }
 
     /**
