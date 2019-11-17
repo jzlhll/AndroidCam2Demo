@@ -2,7 +2,7 @@ package com.allan.cam2api.utils;
 
 public abstract class Singleton<T> {
 
-    protected T instance;
+    private T instance;
 
     public abstract T create();
 
