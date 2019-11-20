@@ -103,8 +103,6 @@ public class MainActivity extends AppCompatActivity implements MyCameraManager.M
             gotoMod = MODE_PREVIEW;
         } else if (id == R.id.action_preview_pic) {
             gotoMod = MODE_PREVIEW_PICTURE;
-        } else if (id == R.id.action_picture_only) {
-            gotoMod = MODE_PICTURE_NO_PREVIW;
         }
 
         if (gotoMod != null) {
