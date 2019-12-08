@@ -7,8 +7,8 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-import com.allan.cam2api.MainActivity;
-import com.allan.cam2api.R;
+import com.allan.activity.FirstActivity;
+import com.allan.activity.R;
 
 public class EnterActivity extends Activity {
 
@@ -20,9 +20,9 @@ public class EnterActivity extends Activity {
 
     public void onClickedEnterButton(View v) {
         if (v.getId() == R.id.enterBtn1) {
-            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+            startActivity(new Intent(getApplicationContext(), FirstActivity.class));
         } else if (v.getId() == R.id.enterBtn2) {
-           // startActivity(new Intent(getApplicationContext(), com.allan.cam2buffer.MainActivity.class));
+           // startActivity(new Intent(getApplicationContext(), com.allan.cam2buffer.FirstActivity.class));
         }
     }
 }

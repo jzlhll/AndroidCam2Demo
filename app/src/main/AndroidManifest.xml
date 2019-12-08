@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
     <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.allan.cam2api">
+        package="com.allan.activity">
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -18,16 +18,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.allan.cam2api.MainActivity"
+            android:name="com.allan.activity.FirstActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
 
-        <activity
-            android:name="com.allan.cam2buffer.MainActivity"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
-        </activity>
         <activity
             android:name="com.allan.EnterActivity"
             android:label="@string/app_name"
