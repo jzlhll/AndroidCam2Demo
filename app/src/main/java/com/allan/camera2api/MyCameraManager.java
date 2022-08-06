@@ -17,8 +17,8 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 import com.allan.activity.FirstActivity;
-import com.allan.base.RecordCallbackBean;
-import com.allan.base.TakePictureCallbackBean;
+import com.allan.base.RecordCallbackWrap;
+import com.allan.base.TakePictureCallbackWrap;
 import com.allan.base.IActionRecord;
 import com.allan.base.IActionTakePicture;
 import com.allan.base.ICameraAction;
@@ -111,7 +111,7 @@ public class MyCameraManager implements ICameraAction {
      * 在含有picture模式下才能去takePicture
      */
     public void takePicture(String dir, String name, ITakePictureCallback callback) {
-        TakePictureCallbackBean f = new TakePictureCallbackBean(dir, name, callback);
+        TakePictureCallbackWrap f = new TakePictureCallbackWrap(dir, name, callback);
         mCamHandler.getHandler().sendMessage(mCamHandler.getHandler().obtainMessage(ACTION_TAKE_PICTURE, f));
     }
 
@@ -119,7 +119,7 @@ public class MyCameraManager implements ICameraAction {
      * 不同于拍照，开始录制，是必须切换模式的。因此相当于transmitMod createSession并传递了record
      */
     public void startRecord(String path, String name, IRecordCallback callback) {
-        RecordCallbackBean f = new RecordCallbackBean(path, name, callback);
+        RecordCallbackWrap f = new RecordCallbackWrap(path, name, callback);
         mCamHandler.getHandler().sendMessage(mCamHandler.getHandler().obtainMessage(ACTION_START_REC, f));
     }
 
@@ -376,8 +376,8 @@ class MyCameraManagerHandler implements WeakHandler.WeakCallback {
                 if ((featureId & FeatureUtil.FEATURE_PICTURE) == FeatureUtil.FEATURE_PICTURE) {
                     if (st instanceof IActionTakePicture) {
                         IActionTakePicture action = (IActionTakePicture) st;
-                        TakePictureCallbackBean func = (TakePictureCallbackBean) msg.obj;
-                        action.takePicture(func.dir, func.name, func.callback);
+                        TakePictureCallbackWrap func = (TakePictureCallbackWrap) msg.obj;
+                        action.takePicture(func);
                     } else {
                         Context mContext = mWfContext.get();
                         if (mContext == null) {
@@ -489,7 +489,7 @@ class MyCameraManagerHandler implements WeakHandler.WeakCallback {
 
                 curSt.closeSession(); //关闭session
 
-                RecordCallbackBean func = (RecordCallbackBean) msg.obj;
+                RecordCallbackWrap func = (RecordCallbackWrap) msg.obj;
                 final IRecordCallback callback = func.callback;
                 CamLog.d("setRecordPath ");
                 mManager.setRecordFilePath(func.path + File.separator + func.name); //TODO 由于createSurfaces是在构造函数中调用，没法直接传递参数

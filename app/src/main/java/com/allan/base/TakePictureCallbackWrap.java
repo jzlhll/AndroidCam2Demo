@@ -1,10 +1,10 @@
 package com.allan.base;
-public final class TakePictureCallbackBean {
+public final class TakePictureCallbackWrap {
     public final ITakePictureCallback callback;
     public final String dir;
     public final String name;
 
-    public TakePictureCallbackBean(String dir, String name, ITakePictureCallback callback) {
+    public TakePictureCallbackWrap(String dir, String name, ITakePictureCallback callback) {
         this.callback = callback;
         this.dir = dir;
         this.name = name;

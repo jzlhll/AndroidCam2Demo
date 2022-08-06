@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 
 import com.allan.base.IActionTakePicture;
 import com.allan.base.ITakePictureCallback;
+import com.allan.base.TakePictureCallbackWrap;
 import com.allan.camera2api.MyCameraManager;
 import com.allan.utils.CamLog;
 
@@ -42,7 +43,11 @@ public class TakePictureBuilder implements IActionTakePicture, ImageReader.OnIma
     }
 
     @Override
-    public void takePicture(String dir, String name, final ITakePictureCallback callback) {
+    public void takePicture(TakePictureCallbackWrap func) {
+        String dir = func.dir;
+        String name = func.name;
+        final ITakePictureCallback callback = func.callback;
+
         mNextFile = new File(dir + File.separator + name);
         try {
             // This is the CaptureRequest.Builder that we use to take a picture.

@@ -35,7 +35,7 @@ public class FirstActivity extends AppCompatActivity implements MyCameraManager.
         return mRecordBtn;
     }
 
-    private OnClickListener mClickListener = new OnClickListener() {
+    private final OnClickListener mClickListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {

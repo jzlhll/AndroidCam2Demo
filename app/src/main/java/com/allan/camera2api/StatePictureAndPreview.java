@@ -2,6 +2,7 @@ package com.allan.camera2api;
 
 import com.allan.base.ITakePictureCallback;
 import com.allan.base.IActionTakePicture;
+import com.allan.base.TakePictureCallbackWrap;
 import com.allan.camera2api.image.TakePictureBuilder;
 
 public class StatePictureAndPreview extends StatePreview implements IActionTakePicture {
@@ -31,7 +32,7 @@ public class StatePictureAndPreview extends StatePreview implements IActionTakeP
     }
 
     @Override
-    public void takePicture(String dir, String name, ITakePictureCallback callback) {
-        mTakePic.takePicture(dir, name, callback);
+    public void takePicture(TakePictureCallbackWrap func) {
+        mTakePic.takePicture(func);
     }
 }
